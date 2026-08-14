@@ -3,6 +3,7 @@ import {
     participantAvatar,
     participantInitials,
     participantName,
+    selectParticipantCounts,
     selectParticipantsWithTracks,
     selectScreenShare
 } from './participants';
@@ -16,13 +17,14 @@ import type {
     JitsiParticipant,
     JitsiStore,
     JitsiTrack,
+    ParticipantCounts,
     PiPMode,
     PiPState,
     SelectedParticipant,
     SelectedScreenShare
 } from './types';
 
-export const PLUGIN_VERSION = '1.2.5';
+export const PLUGIN_VERSION = '1.2.8';
 
 export function isAutoPiPProtocolEligible(protocol: string): boolean {
     return protocol === 'https:' || protocol === 'file:';
@@ -46,6 +48,11 @@ interface ScreenShareElements {
     label: HTMLDivElement;
     root: HTMLDivElement;
     video: HTMLVideoElement;
+}
+
+interface ParticipantCountElements {
+    conference: HTMLElement;
+    lobby: HTMLElement;
 }
 
 type ToolbarNotify = (key: string, preventExecution?: boolean) => unknown;
@@ -78,6 +85,7 @@ export class JitsiMeetPiPPlugin {
     private destroyed = false;
     private documentContent?: HTMLDivElement;
     private documentGrid?: HTMLDivElement;
+    private documentParticipantCounts?: ParticipantCountElements;
     private documentWindow?: Window;
     private fallbackAttachedTrack?: JitsiTrack;
     private fallbackCanvas?: HTMLCanvasElement;
@@ -97,6 +105,7 @@ export class JitsiMeetPiPPlugin {
     private mediaSessionActions = new Set<string>();
     private pending = false;
     private pendingAutomatic = false;
+    private participantCounts: ParticipantCounts = { conference: 0, lobby: 0 };
     private screenShare?: SelectedScreenShare;
     private screenShareElements?: ScreenShareElements;
     private selected: SelectedParticipant[] = [];
@@ -264,6 +273,7 @@ export class JitsiMeetPiPPlugin {
         }
         this.toast?.remove();
         this.toast = undefined;
+        this.participantCounts = { conference: 0, lobby: 0 };
         this.screenShare = undefined;
         this.selected = [];
     }
@@ -295,6 +305,7 @@ export class JitsiMeetPiPPlugin {
             mode: this.getSupportedMode(),
             open: Boolean(this.documentWindow
                 || (this.fallbackVideo && documentWithPiP.pictureInPictureElement === this.fallbackVideo)),
+            participantCounts: { ...this.participantCounts },
             participants: this.selected.map(({ participant }) => participant.id),
             pending: this.pending,
             screenShare: this.screenShare
@@ -603,7 +614,7 @@ export class JitsiMeetPiPPlugin {
     private setupDocumentWindow(pipWindow: Window): void {
         const document = pipWindow.document;
 
-        document.title = 'Jitsi Meet — Picture-in-Picture';
+        document.title = this.config.windowTitle;
         document.documentElement.lang = this.host.document.documentElement.lang || 'ru';
         document.body.replaceChildren();
 
@@ -619,6 +630,9 @@ export class JitsiMeetPiPPlugin {
         const screenShareLabel = document.createElement('div');
         const grid = document.createElement('div');
         const controls = document.createElement('div');
+        const participantCounts = document.createElement('div');
+        const conferenceCount = document.createElement('strong');
+        const lobbyCount = document.createElement('strong');
 
         root.className = 'jmp-root';
         content.className = 'jmp-content has-screen-share';
@@ -630,14 +644,22 @@ export class JitsiMeetPiPPlugin {
         screenShareVideo.playsInline = true;
         screenShareLabel.className = 'jmp-screen-share-label';
         screenShareLabel.innerHTML = ICONS.screenSharePlaceholder;
-        screenShareRoot.setAttribute('aria-label', 'Нет активной демонстрации');
+        screenShareRoot.setAttribute('aria-label', this.config.noScreenShareLabel);
         grid.className = 'jmp-grid';
         controls.className = 'jmp-controls';
+        participantCounts.className = 'jmp-participant-counts';
+        participantCounts.setAttribute('aria-live', 'polite');
+        participantCounts.append(
+            `${this.config.participantsLabel}: `,
+            conferenceCount,
+            ` · ${this.config.lobbyLabel}: `,
+            lobbyCount
+        );
 
         controls.append(
-            this.createControl(document, 'audio', 'Микрофон', ICONS.microphone, () => this.toggleAudio()),
-            this.createControl(document, 'video', 'Камера', ICONS.camera, () => this.toggleVideo()),
-            this.createControl(document, 'return', 'Вернуться в конференцию', ICONS.return, () => {
+            this.createControl(document, 'audio', this.config.microphoneLabel, ICONS.microphone, () => this.toggleAudio()),
+            this.createControl(document, 'video', this.config.cameraLabel, ICONS.camera, () => this.toggleVideo()),
+            this.createControl(document, 'return', this.config.returnToConferenceLabel, ICONS.return, () => {
                 try {
                     this.host.focus();
                 } catch {
@@ -645,20 +667,25 @@ export class JitsiMeetPiPPlugin {
                 }
                 void this.close();
             }),
-            this.createControl(document, 'hangup', 'Завершить звонок', ICONS.hangup, () => this.hangup(), true)
+            this.createControl(document, 'hangup', this.config.hangupLabel, ICONS.hangup, () => this.hangup(), true)
         );
 
         screenShareRoot.append(screenShareVideo, screenShareLabel);
         content.append(screenShareRoot, grid);
-        root.append(content, controls);
+        root.append(content, controls, participantCounts);
         document.body.append(root);
         this.documentContent = content;
         this.documentGrid = grid;
+        this.documentParticipantCounts = {
+            conference: conferenceCount,
+            lobby: lobbyCount
+        };
         this.screenShareElements = {
             label: screenShareLabel,
             root: screenShareRoot,
             video: screenShareVideo
         };
+        this.updateParticipantCountSummary();
     }
 
     private createControl(
@@ -688,18 +715,22 @@ export class JitsiMeetPiPPlugin {
         }
 
         try {
+            const state = this.store.getState();
+
             this.ensureToolbarButtonInStore();
             this.syncMediaSessionCaptureState();
+            this.participantCounts = selectParticipantCounts(state);
             this.screenShare = this.config.showScreenShare
-                ? selectScreenShare(this.store.getState(), this.config.includeLocalScreenShare)
+                ? selectScreenShare(state, this.config.includeLocalScreenShare, this.config)
                 : undefined;
             this.selected = selectParticipantsWithTracks(
-                this.store.getState(),
+                state,
                 this.config.maxParticipants
             );
             this.updateFallbackVideo();
             this.updateDocumentScreenShare();
             this.updateDocumentParticipants();
+            this.updateParticipantCountSummary();
             this.updateControlState();
         } catch (error) {
             this.log('warn', 'Unable to process Jitsi state update', error);
@@ -878,7 +909,7 @@ export class JitsiMeetPiPPlugin {
         const icon = document.createElement('div');
 
         root.className = 'jmp-tile jmp-placeholder';
-        root.setAttribute('aria-label', 'Ожидаем участника');
+        root.setAttribute('aria-label', this.config.waitingParticipantLabel);
         icon.className = 'jmp-placeholder-icon';
         icon.innerHTML = ICONS.participantPlaceholder;
         root.append(icon);
@@ -900,7 +931,7 @@ export class JitsiMeetPiPPlugin {
             this.detachScreenShareTrack(elements);
             elements.root.hidden = false;
             elements.root.classList.add('is-empty');
-            elements.root.setAttribute('aria-label', 'Нет активной демонстрации');
+            elements.root.setAttribute('aria-label', this.config.noScreenShareLabel);
             elements.video.hidden = true;
             elements.label.innerHTML = ICONS.screenSharePlaceholder;
             elements.label.removeAttribute('title');
@@ -973,7 +1004,7 @@ export class JitsiMeetPiPPlugin {
 
     private updateTile(tile: TileElements, item: SelectedParticipant): void {
         const { participant, track } = item;
-        const name = participantName(participant);
+        const name = participantName(participant, this.config.participantLabel);
 
         tile.name.textContent = name;
         tile.name.title = name;
@@ -1004,7 +1035,7 @@ export class JitsiMeetPiPPlugin {
 
     private renderTileAvatar(tile: TileElements, participant: JitsiParticipant): void {
         const url = participantAvatar(participant);
-        const initials = participantInitials(participant);
+        const initials = participantInitials(participant, this.config.participantLabel);
 
         if (tile.avatarUrl === url && tile.avatarInitials === initials) {
             return;
@@ -1054,9 +1085,21 @@ export class JitsiMeetPiPPlugin {
         this.controlButtons.clear();
         this.documentContent = undefined;
         this.documentGrid = undefined;
+        this.documentParticipantCounts = undefined;
         this.documentWindow = undefined;
         this.screenShareElements = undefined;
         this.automatic = false;
+    }
+
+    private updateParticipantCountSummary(): void {
+        const elements = this.documentParticipantCounts;
+
+        if (!elements) {
+            return;
+        }
+
+        elements.conference.textContent = String(this.participantCounts.conference);
+        elements.lobby.textContent = String(this.participantCounts.lobby);
     }
 
     private ensureFallbackVideo(): void {
@@ -1154,7 +1197,7 @@ export class JitsiMeetPiPPlugin {
 
         if (!this.fallbackAttachedTrack) {
             const canvasKey = item?.participant
-                ? `${item.participant.id}:${participantName(item.participant)}`
+                ? `${item.participant.id}:${participantName(item.participant, this.config.participantLabel)}`
                 : 'empty';
 
             if (this.fallbackCanvasKey !== canvasKey) {
@@ -1204,8 +1247,12 @@ export class JitsiMeetPiPPlugin {
             return;
         }
 
-        const name = participant ? participantName(participant) : 'Нет активного собеседника';
-        const initials = participant ? participantInitials(participant) : '…';
+        const name = participant
+            ? participantName(participant, this.config.participantLabel)
+            : this.config.noActiveSpeakerLabel;
+        const initials = participant
+            ? participantInitials(participant, this.config.participantLabel)
+            : '…';
 
         context.fillStyle = '#111827';
         context.fillRect(0, 0, canvas.width, canvas.height);
@@ -1233,8 +1280,12 @@ export class JitsiMeetPiPPlugin {
         const audioMuted = conference?.isLocalAudioMuted?.() ?? false;
         const videoMuted = conference?.isLocalVideoMuted?.() ?? false;
 
-        this.setControlMuted('audio', audioMuted, audioMuted ? 'Включить микрофон' : 'Выключить микрофон');
-        this.setControlMuted('video', videoMuted, videoMuted ? 'Включить камеру' : 'Выключить камеру');
+        this.setControlMuted('audio', audioMuted, audioMuted
+            ? this.config.enableMicrophoneLabel
+            : this.config.disableMicrophoneLabel);
+        this.setControlMuted('video', videoMuted, videoMuted
+            ? this.config.enableCameraLabel
+            : this.config.disableCameraLabel);
     }
 
     private setControlMuted(action: string, muted: boolean, label: string): void {

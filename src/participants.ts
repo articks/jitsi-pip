@@ -1,9 +1,11 @@
 import type {
+    BrowserPiPConfig,
     JitsiParticipant,
     JitsiParticipantsState,
     JitsiReduxState,
     JitsiTrack,
     JitsiTrackState,
+    ParticipantCounts,
     SelectedParticipant,
     SelectedScreenShare
 } from './types';
@@ -33,14 +35,32 @@ function isRealRemoteParticipant(participant?: JitsiParticipant): participant is
     return Boolean(participant && !participant.local && !participant.fakeParticipant);
 }
 
-export function participantName(participant: JitsiParticipant): string {
-    return participant.displayName?.trim()
-        || participant.name?.trim()
-        || 'Участник';
+export function selectParticipantCounts(state: JitsiReduxState): ParticipantCounts {
+    const participants = state['features/base/participants'];
+    let conference = participants?.local ? 1 : 0;
+
+    for (const participant of getRemoteParticipants(participants?.remote)) {
+        if (isRealRemoteParticipant(participant)) {
+            conference += 1;
+        }
+    }
+
+    const knockingParticipants = state['features/lobby']?.knockingParticipants;
+
+    return {
+        conference,
+        lobby: Array.isArray(knockingParticipants) ? knockingParticipants.length : 0
+    };
 }
 
-export function participantInitials(participant: JitsiParticipant): string {
-    const words = participantName(participant)
+export function participantName(participant: JitsiParticipant, fallback = 'Участник'): string {
+    return participant.displayName?.trim()
+        || participant.name?.trim()
+        || fallback;
+}
+
+export function participantInitials(participant: JitsiParticipant, fallback = 'Участник'): string {
+    const words = participantName(participant, fallback)
         .split(/\s+/u)
         .filter(Boolean);
 
@@ -194,7 +214,9 @@ function isScreenShareTrack(track: JitsiTrackState): boolean {
  */
 export function selectScreenShare(
         state: JitsiReduxState,
-        includeLocal = true
+        includeLocal = true,
+        labels: Partial<Pick<BrowserPiPConfig,
+            'participantLabel' | 'screenShareLabel' | 'youLabel'>> = {}
 ): SelectedScreenShare | undefined {
     const tracks = state['features/base/tracks'];
 
@@ -245,12 +267,17 @@ export function selectScreenShare(
         : getRemoteParticipant(participants?.remote, selected.participantId ?? '');
     const displayParticipant = virtualParticipant || owner;
     const local = Boolean(selected.local);
+    const participantLabel = labels.participantLabel?.trim() || 'Участник';
+    const screenShareLabel = labels.screenShareLabel?.trim() || 'Демонстрация';
+    const youLabel = labels.youLabel?.trim() || 'Вы';
 
     return {
         id: sourceName || selected.participantId || (local ? 'local-screen-share' : 'screen-share'),
         label: local
-            ? 'Демонстрация — Вы'
-            : `Демонстрация — ${displayParticipant ? participantName(displayParticipant) : 'Участник'}`,
+            ? `${screenShareLabel} — ${youLabel}`
+            : `${screenShareLabel} — ${displayParticipant
+                ? participantName(displayParticipant, participantLabel)
+                : participantLabel}`,
         local,
         track
     };

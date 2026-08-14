@@ -1,6 +1,6 @@
 {
   "name": "jitsi-meet-pip",
-  "version": "1.2.5",
+  "version": "1.2.8",
   "private": true,
   "description": "Standalone multi-participant Picture-in-Picture plugin for Jitsi Meet",
   "type": "module",

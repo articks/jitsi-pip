@@ -9,7 +9,7 @@ Standalone-плагин для Jitsi Meet, который открывает о�
 Скопируйте `dist/jitsi-meet-pip.min.js` в доступный Jitsi каталог, например `/usr/share/jitsi-meet/libs/`, и добавьте в `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.5"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.8"></script>
 ```
 
 `plugin.head.html` штатного Jitsi 2.0.11146 подключается после `app.bundle.min.js`. Плагин сначала добавляет кнопку в глобальный `config.customToolbarButtons`, а после появления `APP.store` синхронизирует её с Redux-конфигурацией. Это сохраняет кнопку даже при асинхронной повторной загрузке `config.js` самим Jitsi.
@@ -24,9 +24,47 @@ config.browserPip = {
     includeLocalScreenShare: true,
     maxParticipants: 4,
     closeAutoOnReturn: true,
-    buttonText: 'Картинка в картинке'
+    buttonText: 'Картинка в картинке',
+    windowTitle: 'PiP',
+    microphoneLabel: 'Микрофон',
+    cameraLabel: 'Камера',
+    enableMicrophoneLabel: 'Включить микрофон',
+    disableMicrophoneLabel: 'Выключить микрофон',
+    enableCameraLabel: 'Включить камеру',
+    disableCameraLabel: 'Выключить камеру',
+    returnToConferenceLabel: 'Вернуться в конференцию',
+    hangupLabel: 'Завершить звонок',
+    noScreenShareLabel: 'Нет активной демонстрации',
+    waitingParticipantLabel: 'Ожидаем участника',
+    noActiveSpeakerLabel: 'Нет активного собеседника',
+    participantLabel: 'Участник',
+    screenShareLabel: 'Демонстрация',
+    youLabel: 'Вы',
+    participantsLabel: 'Участников',
+    lobbyLabel: 'В лобби'
 };
 ```
+
+## Подписи и локализация
+
+Плагин standalone и не читает языковые файлы Jitsi. Все подписи его интерфейса задаются в `config.browserPip`; в примере выше указаны все значения по умолчанию: русские подписи и заголовок окна `PiP`.
+
+| Поле | Где используется |
+| --- | --- |
+| `buttonText` | Кнопка в toolbar Jitsi |
+| `windowTitle` | Заголовок Document PiP |
+| `microphoneLabel`, `cameraLabel` | Исходные доступные имена кнопок |
+| `enableMicrophoneLabel`, `disableMicrophoneLabel` | Действие кнопки микрофона |
+| `enableCameraLabel`, `disableCameraLabel` | Действие кнопки камеры |
+| `returnToConferenceLabel` | Возврат в основное окно |
+| `hangupLabel` | Завершение звонка |
+| `screenShareLabel`, `youLabel` | Подпись активной демонстрации, включая собственную |
+| `participantLabel` | Имя участника, если Jitsi не передал имя |
+| `noScreenShareLabel`, `waitingParticipantLabel` | `aria-label` иконок пустых состояний |
+| `noActiveSpeakerLabel` | Текст fallback Video PiP без участника |
+| `participantsLabel`, `lobbyLabel` | Подписи динамических счётчиков |
+
+Пустая или состоящая только из пробелов подпись заменяется значением по умолчанию. Диагностические сообщения Auto PiP о протоколе, capture и разрешении сайта остаются системными сообщениями плагина.
 
 ## Поведение
 
@@ -41,6 +79,7 @@ config.browserPip = {
 - При выключенной камере отображаются имя и инициалы.
 - Звук продолжает воспроизводиться только основным окном Jitsi.
 - Доступны кнопки микрофона, камеры, возврата в конференцию и завершения звонка. Включённые микрофон и камера показываются обычными иконками, выключенные — перечёркнутыми; подписи кнопок также меняются на «Включить»/«Выключить».
+- Под панелью управления находится компактная строка `Участников: N · В лобби: M`. Подписи задаются через `participantsLabel` и `lobbyLabel`; значения обновляются через подписку Redux без переоткрытия PiP. В число участников не входят демонстрации экрана и другие виртуальные плитки.
 - Автоматически открытое окно закрывается при возврате на вкладку Jitsi. Окно, открытое кнопкой, остаётся открытым.
 - Если пользователь сам закрывает автоматически открытое окно, Auto PiP больше не срабатывает до перезагрузки страницы или следующего входа в конференцию. Ручная кнопка PiP продолжает работать.
 - В Safari и других браузерах без Document PiP стандартный Video PiP показывает активную демонстрацию, а при её отсутствии — одного говорящего, с системными элементами управления.

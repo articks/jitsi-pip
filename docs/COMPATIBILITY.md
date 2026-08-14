@@ -12,7 +12,7 @@
 - `customToolbarButtons` автоматически включаются в список кнопок toolbar.
 - Redux обрабатывает `OVERWRITE_CONFIG` и пересчитывает custom toolbar buttons после поздней синхронизации плагина.
 - Нажатие custom button вызывает `APP.API.notifyToolbarButtonClicked`.
-- Redux содержит `features/base/participants`, `features/base/tracks`, `features/large-video` и `features/video-layout`; адаптер понимает активных участников, локальный desktop track и виртуальные remote screen-share participants.
+- Redux содержит `features/base/participants`, `features/base/tracks`, `features/large-video`, `features/video-layout` и `features/lobby.knockingParticipants`; адаптер понимает активных участников, локальный desktop track, виртуальные remote screen-share participants и очередь лобби.
 
 Это внутренние интерфейсы Jitsi. После обновления необходимо запустить `npm run test:contract`, browser smoke-test и интеграционный тест `test/jitsi/`.
 
@@ -29,6 +29,8 @@
 
 Точные возможности определяются feature detection, а не User-Agent.
 
+Подписи standalone-окна не связаны с текущим языком Jitsi. Для любого браузера и языка их нужно явно задать в `config.browserPip`; по умолчанию используются русские подписи и заголовок `PiP`.
+
 ## Ограничения
 
 - Требуется top-level страница Jitsi; Document PiP запрещён из iframe.
@@ -38,6 +40,7 @@
 - Если стандартный Video PiP не получил ни camera track, ни `canvas.captureStream`, fallback временно недоступен.
 - При демонстрации самой вкладки Jitsi в PiP может возникать ожидаемый эффект рекурсивного «зеркала».
 - Верхняя и нижняя секции занимают по половине доступной высоты над панелью управления. Четыре карточки используют сетку `2×2`, две — один ряд на всю высоту нижней секции.
+- Число ожидающих в лобби доступно только в той мере, в какой Jitsi публикует `knockingParticipants` текущему пользователю; обычно полный список видят модераторы.
 - Принудительный возврат к начальному размеру `320×640` через `preferInitialWindowPlacement` поддерживается Chrome 130+; более старый Chromium может восстановить ранее выбранный пользователем размер.
 - Нативный запрос Auto PiP контролируется Chromium. Плагин не может принудительно показать его из `visibilitychange`.
 - Для Auto PiP Chrome требует одновременно живой `getUserMedia` capture, зарегистрированный Media Session handler и разрешение «Автоматическая картинка в картинке». Ручное открытие плагина от capture не зависит.

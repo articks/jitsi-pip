@@ -8,9 +8,50 @@ describe('configuration', () => {
         expect(normalizeConfig({ maxParticipants: 99 })).toMatchObject({ maxParticipants: 4 });
         expect(normalizeConfig({ maxParticipants: 0 })).toMatchObject({ maxParticipants: 1 });
         expect(normalizeConfig({ buttonText: '  PiP  ' })).toMatchObject({ buttonText: 'PiP' });
+        expect(normalizeConfig({ lobbyLabel: '  Ожидают  ', participantsLabel: '  Всего  ' }))
+            .toMatchObject({ lobbyLabel: 'Ожидают', participantsLabel: 'Всего' });
+        expect(normalizeConfig({ lobbyLabel: ' ', participantsLabel: '' }))
+            .toMatchObject({ lobbyLabel: 'В лобби', participantsLabel: 'Участников' });
         expect(normalizeConfig()).toMatchObject({
+            cameraLabel: 'Камера',
             includeLocalScreenShare: true,
-            showScreenShare: true
+            lobbyLabel: 'В лобби',
+            microphoneLabel: 'Микрофон',
+            participantsLabel: 'Участников',
+            showScreenShare: true,
+            windowTitle: 'PiP'
+        });
+    });
+
+    it('normalizes every configurable interface label', () => {
+        const translatedLabels = {
+            buttonText: '  Picture in picture  ',
+            cameraLabel: '  Camera  ',
+            disableCameraLabel: '  Turn camera off  ',
+            disableMicrophoneLabel: '  Mute  ',
+            enableCameraLabel: '  Turn camera on  ',
+            enableMicrophoneLabel: '  Unmute  ',
+            hangupLabel: '  Leave  ',
+            lobbyLabel: '  In lobby  ',
+            microphoneLabel: '  Microphone  ',
+            noActiveSpeakerLabel: '  No active speaker  ',
+            noScreenShareLabel: '  No active screen share  ',
+            participantLabel: '  Participant  ',
+            participantsLabel: '  Participants  ',
+            returnToConferenceLabel: '  Return to meeting  ',
+            screenShareLabel: '  Screen share  ',
+            waitingParticipantLabel: '  Waiting for participant  ',
+            windowTitle: '  Meeting PiP  ',
+            youLabel: '  You  '
+        };
+
+        expect(normalizeConfig(translatedLabels)).toMatchObject(
+            Object.fromEntries(Object.entries(translatedLabels)
+                .map(([ key, value ]) => [ key, value.trim() ]))
+        );
+        expect(normalizeConfig({ hangupLabel: ' ', windowTitle: '' })).toMatchObject({
+            hangupLabel: 'Завершить звонок',
+            windowTitle: 'PiP'
         });
     });
 

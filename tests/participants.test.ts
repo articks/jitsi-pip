@@ -5,6 +5,7 @@ import {
     selectActiveParticipants,
     selectCameraTrack,
     selectLocalCameraTrack,
+    selectParticipantCounts,
     selectParticipantsWithTracks,
     selectScreenShare
 } from '../src/participants';
@@ -48,6 +49,23 @@ describe('active participant selection', () => {
         };
 
         expect(selectActiveParticipants(state, 10)).toHaveLength(4);
+    });
+
+    it('counts real conference participants and people waiting in the lobby', () => {
+        const state: JitsiReduxState = {
+            'features/base/participants': {
+                local: participant('local', { local: true }),
+                remote: new Map([
+                    [ 'a', participant('a') ],
+                    [ 'screen', participant('screen', { fakeParticipant: 'RemoteScreenShare' }) ]
+                ])
+            },
+            'features/lobby': {
+                knockingParticipants: [ { id: 'waiting-1' }, { id: 'waiting-2' } ]
+            }
+        };
+
+        expect(selectParticipantCounts(state)).toEqual({ conference: 2, lobby: 2 });
     });
 
     it('fills silent conferences with connected remote participants', () => {
@@ -218,6 +236,13 @@ describe('active participant selection', () => {
             label: 'Демонстрация — Вы',
             local: true,
             track: desktop
+        });
+        expect(selectScreenShare(state, true, {
+            participantLabel: 'Participant',
+            screenShareLabel: 'Screen share',
+            youLabel: 'You'
+        })).toMatchObject({
+            label: 'Screen share — You'
         });
         expect(selectScreenShare(state, false)).toBeUndefined();
     });

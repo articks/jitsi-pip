@@ -11,12 +11,33 @@ export const TOOLBAR_ICON = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.or
 export const DEFAULT_CONFIG: BrowserPiPConfig = {
     autoOpen: true,
     buttonText: 'Картинка в картинке',
+    cameraLabel: 'Камера',
     closeAutoOnReturn: true,
+    disableCameraLabel: 'Выключить камеру',
+    disableMicrophoneLabel: 'Выключить микрофон',
     enabled: true,
+    enableCameraLabel: 'Включить камеру',
+    enableMicrophoneLabel: 'Включить микрофон',
+    hangupLabel: 'Завершить звонок',
     includeLocalScreenShare: true,
+    lobbyLabel: 'В лобби',
     maxParticipants: 4,
-    showScreenShare: true
+    microphoneLabel: 'Микрофон',
+    noActiveSpeakerLabel: 'Нет активного собеседника',
+    noScreenShareLabel: 'Нет активной демонстрации',
+    participantLabel: 'Участник',
+    participantsLabel: 'Участников',
+    returnToConferenceLabel: 'Вернуться в конференцию',
+    screenShareLabel: 'Демонстрация',
+    showScreenShare: true,
+    waitingParticipantLabel: 'Ожидаем участника',
+    windowTitle: 'PiP',
+    youLabel: 'Вы'
 };
+
+function normalizeLabel(value: unknown, fallback: string): string {
+    return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
 
 function clampParticipants(value: unknown): number {
     const parsed = typeof value === 'number' ? value : Number(value);
@@ -31,14 +52,29 @@ function clampParticipants(value: unknown): number {
 export function normalizeConfig(config?: Partial<BrowserPiPConfig>): BrowserPiPConfig {
     return {
         autoOpen: config?.autoOpen ?? DEFAULT_CONFIG.autoOpen,
-        buttonText: typeof config?.buttonText === 'string' && config.buttonText.trim()
-            ? config.buttonText.trim()
-            : DEFAULT_CONFIG.buttonText,
+        buttonText: normalizeLabel(config?.buttonText, DEFAULT_CONFIG.buttonText),
+        cameraLabel: normalizeLabel(config?.cameraLabel, DEFAULT_CONFIG.cameraLabel),
         closeAutoOnReturn: config?.closeAutoOnReturn ?? DEFAULT_CONFIG.closeAutoOnReturn,
+        disableCameraLabel: normalizeLabel(config?.disableCameraLabel, DEFAULT_CONFIG.disableCameraLabel),
+        disableMicrophoneLabel: normalizeLabel(config?.disableMicrophoneLabel, DEFAULT_CONFIG.disableMicrophoneLabel),
         enabled: config?.enabled ?? DEFAULT_CONFIG.enabled,
+        enableCameraLabel: normalizeLabel(config?.enableCameraLabel, DEFAULT_CONFIG.enableCameraLabel),
+        enableMicrophoneLabel: normalizeLabel(config?.enableMicrophoneLabel, DEFAULT_CONFIG.enableMicrophoneLabel),
+        hangupLabel: normalizeLabel(config?.hangupLabel, DEFAULT_CONFIG.hangupLabel),
         includeLocalScreenShare: config?.includeLocalScreenShare ?? DEFAULT_CONFIG.includeLocalScreenShare,
+        lobbyLabel: normalizeLabel(config?.lobbyLabel, DEFAULT_CONFIG.lobbyLabel),
         maxParticipants: clampParticipants(config?.maxParticipants),
-        showScreenShare: config?.showScreenShare ?? DEFAULT_CONFIG.showScreenShare
+        microphoneLabel: normalizeLabel(config?.microphoneLabel, DEFAULT_CONFIG.microphoneLabel),
+        noActiveSpeakerLabel: normalizeLabel(config?.noActiveSpeakerLabel, DEFAULT_CONFIG.noActiveSpeakerLabel),
+        noScreenShareLabel: normalizeLabel(config?.noScreenShareLabel, DEFAULT_CONFIG.noScreenShareLabel),
+        participantLabel: normalizeLabel(config?.participantLabel, DEFAULT_CONFIG.participantLabel),
+        participantsLabel: normalizeLabel(config?.participantsLabel, DEFAULT_CONFIG.participantsLabel),
+        returnToConferenceLabel: normalizeLabel(config?.returnToConferenceLabel, DEFAULT_CONFIG.returnToConferenceLabel),
+        screenShareLabel: normalizeLabel(config?.screenShareLabel, DEFAULT_CONFIG.screenShareLabel),
+        showScreenShare: config?.showScreenShare ?? DEFAULT_CONFIG.showScreenShare,
+        waitingParticipantLabel: normalizeLabel(config?.waitingParticipantLabel, DEFAULT_CONFIG.waitingParticipantLabel),
+        windowTitle: normalizeLabel(config?.windowTitle, DEFAULT_CONFIG.windowTitle),
+        youLabel: normalizeLabel(config?.youLabel, DEFAULT_CONFIG.youLabel)
     };
 }
 

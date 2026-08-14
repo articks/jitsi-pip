@@ -16,5 +16,8 @@ describe('Document PiP layout styles', () => {
             .toContain('.jmp-grid[data-count="2"] .jmp-tile { height: 100%; }');
         expect(DOCUMENT_PIP_STYLES)
             .not.toContain('.jmp-content.has-screen-share .jmp-grid[data-count="4"]');
+        expect(DOCUMENT_PIP_STYLES)
+            .toContain('.jmp-root { display: grid; grid-template-rows: 1fr auto auto;');
+        expect(DOCUMENT_PIP_STYLES).toContain('.jmp-participant-counts');
     });
 });

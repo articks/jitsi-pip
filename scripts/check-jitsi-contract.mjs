@@ -66,6 +66,12 @@ const checks = [
         ]
     },
     {
+        file: 'react/features/lobby/reducer.ts',
+        assertions: [
+            [ /knockingParticipants:\s*\[\]/u, 'lobby state must expose knocking participants' ]
+        ]
+    },
+    {
         file: 'react/features/base/tracks/functions.any.ts',
         assertions: [
             [ /function getLocalDesktopTrack/u, 'tracks API must expose local desktop tracks' ],

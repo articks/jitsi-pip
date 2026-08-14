@@ -3,11 +3,28 @@ export type PiPMode = 'document' | 'video' | 'none';
 export interface BrowserPiPConfig {
     autoOpen: boolean;
     buttonText: string;
+    cameraLabel: string;
     closeAutoOnReturn: boolean;
+    disableCameraLabel: string;
+    disableMicrophoneLabel: string;
     enabled: boolean;
+    enableCameraLabel: string;
+    enableMicrophoneLabel: string;
+    hangupLabel: string;
     includeLocalScreenShare: boolean;
+    lobbyLabel: string;
     maxParticipants: number;
+    microphoneLabel: string;
+    noActiveSpeakerLabel: string;
+    noScreenShareLabel: string;
+    participantLabel: string;
+    participantsLabel: string;
+    returnToConferenceLabel: string;
+    screenShareLabel: string;
     showScreenShare: boolean;
+    waitingParticipantLabel: string;
+    windowTitle: string;
+    youLabel: string;
 }
 
 export interface JitsiParticipant {
@@ -51,11 +68,19 @@ export interface JitsiParticipantsState {
     speakersList?: Map<string, unknown> | Array<[string, unknown]>;
 }
 
+export interface ParticipantCounts {
+    conference: number;
+    lobby: number;
+}
+
 export type JitsiReduxState = Record<string, unknown> & {
     'features/base/participants'?: JitsiParticipantsState;
     'features/base/tracks'?: JitsiTrackState[];
     'features/large-video'?: {
         participantId?: string;
+    };
+    'features/lobby'?: {
+        knockingParticipants?: Array<{ id?: string }>;
     };
     'features/video-layout'?: {
         remoteScreenShares?: string[];
@@ -128,6 +153,7 @@ export interface PiPState {
     destroyed: boolean;
     mode: PiPMode;
     open: boolean;
+    participantCounts: ParticipantCounts;
     participants: string[];
     pending: boolean;
     screenShare?: {
