@@ -4,7 +4,9 @@ import {
     participantInitials,
     selectActiveParticipants,
     selectCameraTrack,
-    selectParticipantsWithTracks
+    selectLocalCameraTrack,
+    selectParticipantsWithTracks,
+    selectScreenShare
 } from '../src/participants';
 import type { JitsiParticipant, JitsiReduxState, JitsiTrack } from '../src/types';
 
@@ -110,6 +112,114 @@ describe('active participant selection', () => {
             participant: { id: 'a' },
             track: camera
         });
+    });
+
+    it('places the local participant first and keeps the grid capped at four', () => {
+        const localCamera = { attach: vi.fn(), getVideoType: () => 'camera' } as JitsiTrack;
+        const localDesktop = { attach: vi.fn(), getVideoType: () => 'desktop' } as JitsiTrack;
+        const remote = new Map<string, JitsiParticipant>([
+            [ 'a', participant('a') ],
+            [ 'b', participant('b') ],
+            [ 'c', participant('c') ],
+            [ 'd', participant('d') ]
+        ]);
+        const state: JitsiReduxState = {
+            'features/base/participants': {
+                activeSpeakers: [ 'a', 'b', 'c', 'd' ],
+                local: participant('local', { local: true, name: 'Me' }),
+                remote
+            },
+            'features/base/tracks': [
+                {
+                    jitsiTrack: localDesktop,
+                    local: true,
+                    mediaType: 'video',
+                    participantId: 'local',
+                    videoType: 'desktop'
+                },
+                {
+                    jitsiTrack: localCamera,
+                    local: true,
+                    mediaType: 'video',
+                    participantId: 'local',
+                    videoType: 'camera'
+                }
+            ]
+        };
+
+        expect(selectLocalCameraTrack(state)).toBe(localCamera);
+        expect(selectParticipantsWithTracks(state, 4).map(item => item.participant.id))
+            .toEqual([ 'local', 'a', 'b', 'c' ]);
+    });
+
+    it('selects the active remote screen share and resolves its owner name', () => {
+        const desktop = {
+            attach: vi.fn(),
+            getSourceName: () => 'owner-desktop-1',
+            getVideoType: () => 'desktop'
+        } as JitsiTrack;
+        const state: JitsiReduxState = {
+            'features/base/participants': {
+                remote: new Map([
+                    [ 'owner', participant('owner', { name: 'Alice' }) ],
+                    [ 'owner-desktop-1', participant('owner-desktop-1', {
+                        fakeParticipant: 'RemoteScreenShare',
+                        name: 'Alice'
+                    }) ]
+                ])
+            },
+            'features/base/tracks': [
+                {
+                    jitsiTrack: desktop,
+                    mediaType: 'video',
+                    participantId: 'owner',
+                    videoType: 'desktop'
+                }
+            ],
+            'features/large-video': { participantId: 'owner-desktop-1' },
+            'features/video-layout': { remoteScreenShares: [ 'owner-desktop-1' ] }
+        };
+
+        expect(selectScreenShare(state)).toMatchObject({
+            id: 'owner-desktop-1',
+            label: 'Демонстрация — Alice',
+            local: false,
+            track: desktop
+        });
+    });
+
+    it('includes a local screen share unless local sharing is disabled', () => {
+        const desktop = {
+            attach: vi.fn(),
+            getSourceName: () => 'local-desktop-1',
+            getVideoType: () => 'desktop'
+        } as JitsiTrack;
+        const state: JitsiReduxState = {
+            'features/base/participants': {
+                local: participant('local', { local: true, name: 'Me' }),
+                localScreenShare: participant('local-desktop-1', {
+                    fakeParticipant: 'LocalScreenShare',
+                    name: 'Me'
+                })
+            },
+            'features/base/tracks': [
+                {
+                    jitsiTrack: desktop,
+                    local: true,
+                    mediaType: 'video',
+                    participantId: 'local',
+                    videoType: 'desktop'
+                }
+            ]
+        };
+
+        expect(selectScreenShare(state)).toMatchObject({
+            id: 'local-desktop-1',
+            label: 'Демонстрация — Вы',
+            local: true,
+            track: desktop
+        });
+        expect(selectScreenShare(state, false)).toBeUndefined();
     });
 
     it('builds readable initials', () => {

@@ -8,6 +8,10 @@ describe('configuration', () => {
         expect(normalizeConfig({ maxParticipants: 99 })).toMatchObject({ maxParticipants: 4 });
         expect(normalizeConfig({ maxParticipants: 0 })).toMatchObject({ maxParticipants: 1 });
         expect(normalizeConfig({ buttonText: '  PiP  ' })).toMatchObject({ buttonText: 'PiP' });
+        expect(normalizeConfig()).toMatchObject({
+            includeLocalScreenShare: true,
+            showScreenShare: true
+        });
     });
 
     it('preserves existing custom buttons and adds its button once', () => {

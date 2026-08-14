@@ -5,7 +5,9 @@ export interface BrowserPiPConfig {
     buttonText: string;
     closeAutoOnReturn: boolean;
     enabled: boolean;
+    includeLocalScreenShare: boolean;
     maxParticipants: number;
+    showScreenShare: boolean;
 }
 
 export interface JitsiParticipant {
@@ -23,6 +25,7 @@ export interface JitsiTrack {
     attach: (element: HTMLMediaElement) => unknown;
     detach?: (element: HTMLMediaElement) => unknown;
     getParticipantId?: () => string;
+    getSourceName?: () => string;
     getTrack?: () => MediaStreamTrack;
     getType?: () => string;
     getVideoType?: () => string;
@@ -43,6 +46,7 @@ export interface JitsiParticipantsState {
     activeSpeakers?: Set<string> | string[];
     dominantSpeaker?: string;
     local?: JitsiParticipant;
+    localScreenShare?: JitsiParticipant;
     remote?: Map<string, JitsiParticipant> | Record<string, JitsiParticipant>;
     speakersList?: Map<string, unknown> | Array<[string, unknown]>;
 }
@@ -50,6 +54,12 @@ export interface JitsiParticipantsState {
 export type JitsiReduxState = Record<string, unknown> & {
     'features/base/participants'?: JitsiParticipantsState;
     'features/base/tracks'?: JitsiTrackState[];
+    'features/large-video'?: {
+        participantId?: string;
+    };
+    'features/video-layout'?: {
+        remoteScreenShares?: string[];
+    };
 };
 
 export interface JitsiStore {
@@ -120,6 +130,11 @@ export interface PiPState {
     open: boolean;
     participants: string[];
     pending: boolean;
+    screenShare?: {
+        id: string;
+        label: string;
+        local: boolean;
+    };
 }
 
 export interface JitsiBrowserPiPPublicApi {
@@ -140,4 +155,11 @@ export type JitsiHostWindow = Window & typeof globalThis & {
 export interface SelectedParticipant {
     participant: JitsiParticipant;
     track?: JitsiTrack;
+}
+
+export interface SelectedScreenShare {
+    id: string;
+    label: string;
+    local: boolean;
+    track: JitsiTrack;
 }

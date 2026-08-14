@@ -13,7 +13,9 @@ export const DEFAULT_CONFIG: BrowserPiPConfig = {
     buttonText: 'Картинка в картинке',
     closeAutoOnReturn: true,
     enabled: true,
-    maxParticipants: 4
+    includeLocalScreenShare: true,
+    maxParticipants: 4,
+    showScreenShare: true
 };
 
 function clampParticipants(value: unknown): number {
@@ -34,7 +36,9 @@ export function normalizeConfig(config?: Partial<BrowserPiPConfig>): BrowserPiPC
             : DEFAULT_CONFIG.buttonText,
         closeAutoOnReturn: config?.closeAutoOnReturn ?? DEFAULT_CONFIG.closeAutoOnReturn,
         enabled: config?.enabled ?? DEFAULT_CONFIG.enabled,
-        maxParticipants: clampParticipants(config?.maxParticipants)
+        includeLocalScreenShare: config?.includeLocalScreenShare ?? DEFAULT_CONFIG.includeLocalScreenShare,
+        maxParticipants: clampParticipants(config?.maxParticipants),
+        showScreenShare: config?.showScreenShare ?? DEFAULT_CONFIG.showScreenShare
     };
 }
 

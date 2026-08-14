@@ -3,7 +3,8 @@ import {
     participantAvatar,
     participantInitials,
     participantName,
-    selectParticipantsWithTracks
+    selectParticipantsWithTracks,
+    selectScreenShare
 } from './participants';
 import { DOCUMENT_PIP_STYLES, ICONS } from './styles';
 import type {
@@ -17,10 +18,11 @@ import type {
     JitsiTrack,
     PiPMode,
     PiPState,
-    SelectedParticipant
+    SelectedParticipant,
+    SelectedScreenShare
 } from './types';
 
-export const PLUGIN_VERSION = '1.1.4';
+export const PLUGIN_VERSION = '1.2.5';
 
 export function isAutoPiPProtocolEligible(protocol: string): boolean {
     return protocol === 'https:' || protocol === 'file:';
@@ -35,6 +37,13 @@ interface TileElements {
     attachedTrack?: JitsiTrack;
     name: HTMLDivElement;
     participantId: string;
+    root: HTMLDivElement;
+    video: HTMLVideoElement;
+}
+
+interface ScreenShareElements {
+    attachedTrack?: JitsiTrack;
+    label: HTMLDivElement;
     root: HTMLDivElement;
     video: HTMLVideoElement;
 }
@@ -67,6 +76,7 @@ export class JitsiMeetPiPPlugin {
     private connectTimer?: number;
     private controlButtons = new Map<string, HTMLButtonElement>();
     private destroyed = false;
+    private documentContent?: HTMLDivElement;
     private documentGrid?: HTMLDivElement;
     private documentWindow?: Window;
     private fallbackAttachedTrack?: JitsiTrack;
@@ -87,6 +97,8 @@ export class JitsiMeetPiPPlugin {
     private mediaSessionActions = new Set<string>();
     private pending = false;
     private pendingAutomatic = false;
+    private screenShare?: SelectedScreenShare;
+    private screenShareElements?: ScreenShareElements;
     private selected: SelectedParticipant[] = [];
     private store?: JitsiStore;
     private storeUnsubscribe?: () => void;
@@ -252,6 +264,8 @@ export class JitsiMeetPiPPlugin {
         }
         this.toast?.remove();
         this.toast = undefined;
+        this.screenShare = undefined;
+        this.selected = [];
     }
 
     getState(): PiPState {
@@ -282,7 +296,14 @@ export class JitsiMeetPiPPlugin {
             open: Boolean(this.documentWindow
                 || (this.fallbackVideo && documentWithPiP.pictureInPictureElement === this.fallbackVideo)),
             participants: this.selected.map(({ participant }) => participant.id),
-            pending: this.pending
+            pending: this.pending,
+            screenShare: this.screenShare
+                ? {
+                    id: this.screenShare.id,
+                    label: this.screenShare.label,
+                    local: this.screenShare.local
+                }
+                : undefined
         };
     }
 
@@ -496,9 +517,9 @@ export class JitsiMeetPiPPlugin {
         try {
             // Do not insert an await before this call: it must keep the toolbar click activation.
             request = controller.requestWindow({
-                height: 360,
-                preferInitialWindowPlacement: false,
-                width: 520
+                height: 640,
+                preferInitialWindowPlacement: true,
+                width: 320
             });
         } catch (error) {
             this.pending = false;
@@ -517,6 +538,7 @@ export class JitsiMeetPiPPlugin {
             this.automatic = this.pendingAutomatic;
             this.documentWindow = pipWindow;
             this.setupDocumentWindow(pipWindow);
+            this.updateDocumentScreenShare();
             this.updateDocumentParticipants();
             this.updateControlState();
 
@@ -591,10 +613,24 @@ export class JitsiMeetPiPPlugin {
         document.head.appendChild(style);
 
         const root = document.createElement('div');
+        const content = document.createElement('div');
+        const screenShareRoot = document.createElement('div');
+        const screenShareVideo = document.createElement('video');
+        const screenShareLabel = document.createElement('div');
         const grid = document.createElement('div');
         const controls = document.createElement('div');
 
         root.className = 'jmp-root';
+        content.className = 'jmp-content has-screen-share';
+        screenShareRoot.className = 'jmp-screen-share is-empty';
+        screenShareVideo.className = 'jmp-screen-share-video';
+        screenShareVideo.autoplay = true;
+        screenShareVideo.hidden = true;
+        screenShareVideo.muted = true;
+        screenShareVideo.playsInline = true;
+        screenShareLabel.className = 'jmp-screen-share-label';
+        screenShareLabel.innerHTML = ICONS.screenSharePlaceholder;
+        screenShareRoot.setAttribute('aria-label', 'Нет активной демонстрации');
         grid.className = 'jmp-grid';
         controls.className = 'jmp-controls';
 
@@ -612,9 +648,17 @@ export class JitsiMeetPiPPlugin {
             this.createControl(document, 'hangup', 'Завершить звонок', ICONS.hangup, () => this.hangup(), true)
         );
 
-        root.append(grid, controls);
+        screenShareRoot.append(screenShareVideo, screenShareLabel);
+        content.append(screenShareRoot, grid);
+        root.append(content, controls);
         document.body.append(root);
+        this.documentContent = content;
         this.documentGrid = grid;
+        this.screenShareElements = {
+            label: screenShareLabel,
+            root: screenShareRoot,
+            video: screenShareVideo
+        };
     }
 
     private createControl(
@@ -646,11 +690,15 @@ export class JitsiMeetPiPPlugin {
         try {
             this.ensureToolbarButtonInStore();
             this.syncMediaSessionCaptureState();
+            this.screenShare = this.config.showScreenShare
+                ? selectScreenShare(this.store.getState(), this.config.includeLocalScreenShare)
+                : undefined;
             this.selected = selectParticipantsWithTracks(
                 this.store.getState(),
                 this.config.maxParticipants
             );
             this.updateFallbackVideo();
+            this.updateDocumentScreenShare();
             this.updateDocumentParticipants();
             this.updateControlState();
         } catch (error) {
@@ -797,18 +845,7 @@ export class JitsiMeetPiPPlugin {
             }
         }
 
-        if (!this.selected.length) {
-            grid.replaceChildren();
-            const empty = this.documentWindow.document.createElement('div');
-
-            empty.className = 'jmp-empty';
-            empty.textContent = 'Ждём активного собеседника';
-            grid.appendChild(empty);
-            grid.dataset.count = '0';
-            return;
-        }
-
-        grid.querySelector('.jmp-empty')?.remove();
+        grid.querySelectorAll('.jmp-placeholder, .jmp-empty').forEach(element => element.remove());
 
         for (const item of this.selected) {
             let tile = this.tiles.get(item.participant.id);
@@ -826,7 +863,82 @@ export class JitsiMeetPiPPlugin {
             }
         }
 
-        grid.dataset.count = String(this.selected.length);
+        const visibleCount = this.selected.length > 2 ? 4 : 2;
+        const placeholderCount = visibleCount - this.selected.length;
+
+        for (let index = 0; index < placeholderCount; index += 1) {
+            grid.appendChild(this.createParticipantPlaceholder(this.documentWindow.document));
+        }
+
+        grid.dataset.count = String(visibleCount);
+    }
+
+    private createParticipantPlaceholder(document: Document): HTMLDivElement {
+        const root = document.createElement('div');
+        const icon = document.createElement('div');
+
+        root.className = 'jmp-tile jmp-placeholder';
+        root.setAttribute('aria-label', 'Ожидаем участника');
+        icon.className = 'jmp-placeholder-icon';
+        icon.innerHTML = ICONS.participantPlaceholder;
+        root.append(icon);
+
+        return root;
+    }
+
+    private updateDocumentScreenShare(): void {
+        const elements = this.screenShareElements;
+        const content = this.documentContent;
+
+        if (!elements || !content) {
+            return;
+        }
+
+        const selected = this.screenShare;
+
+        if (!selected) {
+            this.detachScreenShareTrack(elements);
+            elements.root.hidden = false;
+            elements.root.classList.add('is-empty');
+            elements.root.setAttribute('aria-label', 'Нет активной демонстрации');
+            elements.video.hidden = true;
+            elements.label.innerHTML = ICONS.screenSharePlaceholder;
+            elements.label.removeAttribute('title');
+            content.classList.add('has-screen-share');
+            return;
+        }
+
+        if (elements.attachedTrack !== selected.track) {
+            this.detachScreenShareTrack(elements);
+
+            try {
+                selected.track.attach(elements.video);
+                elements.attachedTrack = selected.track;
+                this.playVideo(elements.video);
+            } catch (error) {
+                this.log('warn', `Unable to attach screen share track ${selected.id}`, error);
+            }
+        }
+
+        elements.label.textContent = selected.label;
+        elements.label.title = selected.label;
+        elements.root.setAttribute('aria-label', selected.label);
+        elements.root.hidden = false;
+        elements.root.classList.remove('is-empty');
+        elements.video.hidden = false;
+        content.classList.add('has-screen-share');
+    }
+
+    private detachScreenShareTrack(elements: ScreenShareElements): void {
+        if (elements.attachedTrack) {
+            try {
+                elements.attachedTrack.detach?.(elements.video);
+            } catch (error) {
+                this.log('warn', 'Unable to detach screen share track', error);
+            }
+            elements.attachedTrack = undefined;
+        }
+        elements.video.srcObject = null;
     }
 
     private createTile(document: Document, participant: JitsiParticipant): TileElements {
@@ -837,6 +949,7 @@ export class JitsiMeetPiPPlugin {
         const name = document.createElement('div');
 
         root.className = 'jmp-tile';
+        root.classList.toggle('is-local', Boolean(participant.local));
         video.className = 'jmp-video';
         video.autoplay = true;
         video.muted = true;
@@ -931,13 +1044,18 @@ export class JitsiMeetPiPPlugin {
     }
 
     private cleanupDocumentWindow(): void {
+        if (this.screenShareElements) {
+            this.detachScreenShareTrack(this.screenShareElements);
+        }
         for (const tile of this.tiles.values()) {
             this.detachTileTrack(tile);
         }
         this.tiles.clear();
         this.controlButtons.clear();
+        this.documentContent = undefined;
         this.documentGrid = undefined;
         this.documentWindow = undefined;
+        this.screenShareElements = undefined;
         this.automatic = false;
     }
 
@@ -1016,8 +1134,9 @@ export class JitsiMeetPiPPlugin {
             return;
         }
 
-        const item = this.selected[0];
-        const nextTrack = item?.track;
+        const item = this.selected.find(({ participant }) => !participant.local)
+            ?? this.selected[0];
+        const nextTrack = this.screenShare?.track ?? item?.track;
 
         if (this.fallbackAttachedTrack !== nextTrack) {
             this.detachFallbackTrack();
@@ -1126,6 +1245,11 @@ export class JitsiMeetPiPPlugin {
         }
 
         button.classList.toggle('is-muted', muted);
+        if (action === 'audio') {
+            button.innerHTML = muted ? ICONS.microphoneMuted : ICONS.microphone;
+        } else if (action === 'video') {
+            button.innerHTML = muted ? ICONS.cameraMuted : ICONS.camera;
+        }
         button.setAttribute('aria-pressed', String(muted));
         button.setAttribute('aria-label', label);
         button.title = label;

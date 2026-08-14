@@ -4,7 +4,8 @@ import type {
     JitsiReduxState,
     JitsiTrack,
     JitsiTrackState,
-    SelectedParticipant
+    SelectedParticipant,
+    SelectedScreenShare
 } from './types';
 
 function getRemoteParticipant(
@@ -128,12 +129,129 @@ export function selectCameraTrack(
         || candidates[0]?.jitsiTrack;
 }
 
+export function selectLocalCameraTrack(state: JitsiReduxState): JitsiTrack | undefined {
+    const tracks = state['features/base/tracks'];
+
+    if (!Array.isArray(tracks)) {
+        return undefined;
+    }
+
+    const candidates = tracks.filter((track: JitsiTrackState) => {
+        const type = track.videoType || track.jitsiTrack?.getVideoType?.();
+        const muted = track.muted ?? track.jitsiTrack?.isMuted?.();
+
+        return track.local
+            && track.mediaType === 'video'
+            && type !== 'desktop'
+            && type !== 'screen'
+            && !muted
+            && Boolean(track.jitsiTrack);
+    });
+
+    return candidates.find(track => (track.videoType || track.jitsiTrack?.getVideoType?.()) === 'camera')?.jitsiTrack
+        || candidates[0]?.jitsiTrack;
+}
+
 export function selectParticipantsWithTracks(
         state: JitsiReduxState,
         limit: number
 ): SelectedParticipant[] {
-    return selectActiveParticipants(state, limit).map(participant => ({
-        participant,
-        track: selectCameraTrack(state, participant.id)
-    }));
+    const normalizedLimit = Math.min(4, Math.max(1, limit));
+    const local = state['features/base/participants']?.local;
+    const selected: SelectedParticipant[] = [];
+
+    if (local) {
+        selected.push({
+            participant: local,
+            track: selectLocalCameraTrack(state)
+        });
+    }
+
+    const remoteLimit = normalizedLimit - selected.length;
+
+    if (remoteLimit > 0) {
+        selected.push(...selectActiveParticipants(state, remoteLimit).map(participant => ({
+            participant,
+            track: selectCameraTrack(state, participant.id)
+        })));
+    }
+
+    return selected.slice(0, normalizedLimit);
+}
+
+function isScreenShareTrack(track: JitsiTrackState): boolean {
+    const type = track.videoType || track.jitsiTrack?.getVideoType?.();
+
+    return track.mediaType === 'screenshare'
+        || ((track.mediaType === 'video' || track.jitsiTrack?.getType?.() === 'video')
+            && (type === 'desktop' || type === 'screen'));
+}
+
+/**
+ * Selects the screen share currently shown by Jitsi on the large stage. If the
+ * stage points elsewhere, the newest remote share wins, then the local share,
+ * then the last usable desktop track.
+ */
+export function selectScreenShare(
+        state: JitsiReduxState,
+        includeLocal = true
+): SelectedScreenShare | undefined {
+    const tracks = state['features/base/tracks'];
+
+    if (!Array.isArray(tracks)) {
+        return undefined;
+    }
+
+    const candidates = tracks.filter(track => {
+        const muted = track.muted ?? track.jitsiTrack?.isMuted?.() ?? false;
+
+        return Boolean(track.jitsiTrack)
+            && isScreenShareTrack(track)
+            && !muted
+            && (includeLocal || !track.local);
+    });
+
+    if (!candidates.length) {
+        return undefined;
+    }
+
+    const participants = state['features/base/participants'];
+    const latestRemoteShares = state['features/video-layout']?.remoteScreenShares ?? [];
+    const preferredIds = [
+        state['features/large-video']?.participantId,
+        ...[ ...latestRemoteShares ].reverse(),
+        includeLocal ? participants?.localScreenShare?.id : undefined
+    ].filter((id): id is string => Boolean(id));
+    const matchesId = (track: JitsiTrackState, id: string) => track.participantId === id
+        || track.jitsiTrack?.getSourceName?.() === id;
+    let selected: JitsiTrackState | undefined;
+
+    for (const id of preferredIds) {
+        selected = candidates.find(track => matchesId(track, id));
+        if (selected) {
+            break;
+        }
+    }
+
+    selected ??= candidates[candidates.length - 1];
+
+    const track = selected.jitsiTrack as JitsiTrack;
+    const sourceName = track.getSourceName?.();
+    const virtualParticipant = sourceName
+        ? getRemoteParticipant(participants?.remote, sourceName)
+        : undefined;
+    const owner = selected.local
+        ? participants?.local
+        : getRemoteParticipant(participants?.remote, selected.participantId ?? '');
+    const displayParticipant = virtualParticipant || owner;
+    const local = Boolean(selected.local);
+
+    return {
+        id: sourceName || selected.participantId || (local ? 'local-screen-share' : 'screen-share'),
+        label: local
+            ? 'Демонстрация — Вы'
+            : `Демонстрация — ${displayParticipant ? participantName(displayParticipant) : 'Участник'}`,
+        local,
+        track
+    };
 }

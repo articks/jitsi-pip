@@ -26,7 +26,9 @@
                 buttonText: 'Картинка в картинке',
                 closeAutoOnReturn: true,
                 enabled: true,
-                maxParticipants: 4
+                includeLocalScreenShare: true,
+                maxParticipants: 4,
+                showScreenShare: true
             },
             customToolbarButtons: [
                 { id: 'existing-test-button', icon: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E', text: 'Existing' }
@@ -44,6 +46,7 @@
         <div class="actions">
             <button id="open" type="button">Открыть PiP через toolbar event</button>
             <button id="rotate" class="secondary" type="button">Сменить говорящего</button>
+            <button id="screen" class="secondary" type="button">Вкл./выкл. демонстрацию</button>
             <button id="close" class="secondary" type="button">Закрыть PiP</button>
         </div>
         <div id="participants"></div>
@@ -65,6 +68,10 @@
         document.querySelector('#rotate').addEventListener('click', () => {
             window.__mockJitsi.rotateSpeaker();
             log('dominant speaker changed');
+        });
+        document.querySelector('#screen').addEventListener('click', () => {
+            window.__mockJitsi.toggleScreenShare();
+            log('screen share toggled');
         });
         document.querySelector('#close').addEventListener('click', async () => {
             await window.JitsiBrowserPiP.close();

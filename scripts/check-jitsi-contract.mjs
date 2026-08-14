@@ -55,6 +55,7 @@ const checks = [
         assertions: [
             [ /(?:activeSpeakers:\s*new Set(?:<[^>]+>)?\s*\(|speakersList:\s*new Map\s*\()/u, 'participants state must expose activeSpeakers or speakersList' ],
             [ /dominantSpeaker:\s*undefined/u, 'participants state must expose dominantSpeaker' ],
+            [ /localScreenShare:\s*undefined/u, 'participants state must expose localScreenShare' ],
             [ /remote:\s*new Map/u, 'participants state must expose remote map' ]
         ]
     },
@@ -62,6 +63,19 @@ const checks = [
         file: 'react/features/base/tracks/reducer.ts',
         assertions: [
             [ /register<ITracksState>\('features\/base\/tracks'/u, 'tracks reducer key must remain stable' ]
+        ]
+    },
+    {
+        file: 'react/features/base/tracks/functions.any.ts',
+        assertions: [
+            [ /function getLocalDesktopTrack/u, 'tracks API must expose local desktop tracks' ],
+            [ /videoType === VIDEO_TYPE\.DESKTOP/u, 'tracks API must identify desktop video' ]
+        ]
+    },
+    {
+        file: 'react/features/video-layout/reducer.ts',
+        assertions: [
+            [ /remoteScreenShares:\s*\[\]/u, 'video layout must expose remote screen shares' ]
         ]
     }
 ];
