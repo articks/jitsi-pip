@@ -1,0 +1,17 @@
+services:
+  web:
+    ports: !override
+      - 127.0.0.1:18000:8000
+      - 127.0.0.1:18443:8443
+    volumes:
+      - ${PIP_PROJECT_DIR}/dist/jitsi-meet-pip.min.js:/usr/share/jitsi-meet/libs/jitsi-meet-pip.min.js:ro
+      - ${PIP_PROJECT_DIR}/test/jitsi/plugin.head.html:/usr/share/jitsi-meet/plugin.head.html:ro
+
+  jicofo:
+    ports: !override
+      - 127.0.0.1:18888:8888
+
+  jvb:
+    ports: !override
+      - 127.0.0.1:11000:10000/udp
+      - 127.0.0.1:18080:8080

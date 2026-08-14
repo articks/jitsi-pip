@@ -1,0 +1,14 @@
+services:
+  test:
+    image: node:24-bookworm
+    working_dir: /workspace
+    environment:
+      JITSI_SOURCE_DIR: /jitsi-meet
+    volumes:
+      - ../..:/workspace
+      - ../../../jitsi-meet:/jitsi-meet:ro
+      - node_modules:/workspace/node_modules
+    command: sh -lc "npm ci && npm run check"
+
+volumes:
+  node_modules:

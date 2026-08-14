@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jitsi Meet PiP — local smoke test</title>
+    <style>
+        :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101827; color: #f8fafc; }
+        body { max-width: 850px; margin: 0 auto; padding: 36px 20px; }
+        h1 { margin-top: 0; }
+        .card { padding: 20px; border: 1px solid #334155; border-radius: 14px; background: #1e293b; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+        button { padding: 10px 14px; border: 0; border-radius: 8px; background: #2563eb; color: white; cursor: pointer; font: inherit; }
+        button.secondary { background: #475569; }
+        code { color: #93c5fd; }
+        #participants { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+        .participant { padding: 20px 8px; border-radius: 8px; background: #334155; text-align: center; }
+        .participant:first-child { outline: 2px solid #60a5fa; }
+        #log { min-height: 80px; padding: 12px; border-radius: 8px; background: #0f172a; white-space: pre-wrap; }
+        canvas { position: fixed; left: -10000px; width: 640px; height: 360px; }
+    </style>
+    <script>
+        window.config = {
+            browserPip: {
+                autoOpen: true,
+                buttonText: 'Картинка в картинке',
+                closeAutoOnReturn: true,
+                enabled: true,
+                maxParticipants: 4
+            },
+            customToolbarButtons: [
+                { id: 'existing-test-button', icon: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E', text: 'Existing' }
+            ]
+        };
+    </script>
+    <script src="mock-jitsi.js"></script>
+    <script src="../../dist/jitsi-meet-pip.min.js"></script>
+</head>
+<body>
+    <h1>Локальный smoke-test Jitsi Meet PiP</h1>
+    <div class="card">
+        <div>Режим: <code id="mode">loading</code></div>
+        <div>Состояние: <code id="state">loading</code></div>
+        <div class="actions">
+            <button id="open" type="button">Открыть PiP через toolbar event</button>
+            <button id="rotate" class="secondary" type="button">Сменить говорящего</button>
+            <button id="close" class="secondary" type="button">Закрыть PiP</button>
+        </div>
+        <div id="participants"></div>
+        <h2>Журнал</h2>
+        <div id="log"></div>
+    </div>
+    <script>
+        const log = message => {
+            const element = document.querySelector('#log');
+            element.textContent = `${new Date().toLocaleTimeString()} ${message}\n${element.textContent}`;
+        };
+
+        window.documentPictureInPicture?.addEventListener('enter', () => log('document-pip-enter'));
+
+        document.querySelector('#open').addEventListener('click', () => {
+            window.APP.API.notifyToolbarButtonClicked('browser-pip', false);
+            log('toolbar-button-clicked: browser-pip');
+        });
+        document.querySelector('#rotate').addEventListener('click', () => {
+            window.__mockJitsi.rotateSpeaker();
+            log('dominant speaker changed');
+        });
+        document.querySelector('#close').addEventListener('click', async () => {
+            await window.JitsiBrowserPiP.close();
+            log('close()');
+        });
+
+        setInterval(() => {
+            const state = window.JitsiBrowserPiP.getState();
+            document.querySelector('#mode').textContent = state.mode;
+            document.querySelector('#state').textContent = JSON.stringify(state);
+            document.querySelector('#participants').replaceChildren(
+                ...window.__mockJitsi.participants().map((name, index) => {
+                    const tile = document.createElement('div');
+                    tile.className = 'participant';
+                    tile.textContent = `${index === 0 ? '🎙 ' : ''}${name}`;
+                    return tile;
+                })
+            );
+        }, 100);
+    </script>
+</body>
+</html>

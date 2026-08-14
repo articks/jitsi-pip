@@ -1,0 +1,26 @@
+{
+  "name": "jitsi-meet-pip",
+  "version": "1.1.4",
+  "private": true,
+  "description": "Standalone multi-participant Picture-in-Picture plugin for Jitsi Meet",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:debug": "node scripts/build.mjs --debug",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:contract": "node scripts/check-jitsi-contract.mjs",
+    "test:dist": "node scripts/check-dist.mjs",
+    "check": "npm run typecheck && npm run test && npm run test:contract && npm run build && npm run test:dist"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/*.js
+dist/*.map
+!dist/jitsi-meet-pip.min.js
+.DS_Store
+coverage/
+test/docker/.env
+test/docker/config/
+test/jitsi/.env
+test/jitsi/config/
