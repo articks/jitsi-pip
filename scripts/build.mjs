@@ -1,10 +1,19 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const packageMetadata = JSON.parse(await readFile(resolve(projectRoot, 'package.json'), 'utf8'));
+const licenseText = await readFile(resolve(projectRoot, 'LICENSE'), 'utf8');
+const legalBanner = [
+    `Jitsi Meet Browser PiP v${packageMetadata.version}`,
+    'https://github.com/articks/jitsi-pip',
+    '',
+    ...licenseText.trim().split('\n')
+].map(line => line ? ` * ${line}` : ' *')
+    .join('\n');
 const debug = process.argv.includes('--debug');
 const outfile = resolve(projectRoot, debug
     ? 'dist/jitsi-meet-pip.js'
@@ -13,7 +22,7 @@ const outfile = resolve(projectRoot, debug
 await mkdir(dirname(outfile), { recursive: true });
 await build({
     banner: {
-        js: '/*! Jitsi Meet Browser PiP v1.0.0 | Target: Jitsi Meet 2.0.11146 */'
+        js: `/*!\n${legalBanner}\n */`
     },
     bundle: true,
     entryPoints: [ resolve(projectRoot, 'src/index.ts') ],

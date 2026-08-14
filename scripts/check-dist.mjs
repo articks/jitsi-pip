@@ -12,6 +12,10 @@ const failures = [];
 if (!bundle.includes('JitsiBrowserPiP')) {
     failures.push('public global API marker is missing');
 }
+if (!bundle.includes('Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>')
+        || !bundle.includes('Permission is hereby granted, free of charge')) {
+    failures.push('MIT copyright and permission notice is missing');
+}
 if (/\b(?:import|export)\s+(?:["'{*]|from\b)/u.test(bundle)) {
     failures.push('bundle still contains an ESM import/export');
 }

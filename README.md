@@ -2,6 +2,8 @@
 
 Standalone-плагин для Jitsi Meet, который открывает отдельное окно Picture-in-Picture с несколькими активными собеседниками и кнопками управления конференцией.
 
+Открытое программное обеспечение под [MIT License](LICENSE): разрешены любое использование, доработка и дистрибуция, включая коммерческие, при сохранении уведомления об авторстве и текста лицензии. Автор — [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
+
 Плагин разработан и проверяется относительно Jitsi Meet `2.0.11146` (`stable/jitsi-meet_11146`, commit `48d96e4`). Он использует внутренние объекты `window.APP`, `APP.store` и `APP.conference`, поэтому после обновления Jitsi необходимо повторять контрактный тест.
 
 ## Подключение
@@ -9,7 +11,7 @@ Standalone-плагин для Jitsi Meet, который открывает о�
 Скопируйте `dist/jitsi-meet-pip.min.js` в доступный Jitsi каталог, например `/usr/share/jitsi-meet/libs/`, и добавьте в `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.8"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.9"></script>
 ```
 
 `plugin.head.html` штатного Jitsi 2.0.11146 подключается после `app.bundle.min.js`. Плагин сначала добавляет кнопку в глобальный `config.customToolbarButtons`, а после появления `APP.store` синхронизирует её с Redux-конфигурацией. Это сохраняет кнопку даже при асинхронной повторной загрузке `config.js` самим Jitsi.
@@ -141,4 +143,8 @@ docker run --rm --name jitsi-meet-pip-smoke \
 JITSI_SOURCE_DIR=/path/to/jitsi-meet npm run test:contract
 ```
 
-Дополнительная информация: [план](docs/PLAN.md), [решения](docs/DECISIONS.md), [совместимость](docs/COMPATIBILITY.md), [результаты тестирования](docs/TEST_RESULTS.md).
+## Лицензия
+
+Проект распространяется под [MIT License](LICENSE). Вы можете свободно использовать, изменять, публиковать и распространять его при сохранении `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` и текста MIT License. Подробности и список документов — в разделе [«Лицензия и авторство»](docs/LEGAL.md).
+
+Дополнительная информация: [план](docs/PLAN.md), [решения](docs/DECISIONS.md), [совместимость](docs/COMPATIBILITY.md), [результаты тестирования](docs/TEST_RESULTS.md), [лицензия и авторство](docs/LEGAL.md).
