@@ -7,13 +7,13 @@ Date: August 16, 2026.
 ## Automated checks
 
 - `npm run typecheck` — passed.
-- Vitest — 4 test files and 34 tests passed.
+- Vitest — 4 test files and 35 tests passed.
 - Contract test against the adjacent local Jitsi tree — passed.
 - Contract test against the exact upstream `stable/jitsi-meet_11146` archive — passed.
 - esbuild production build — passed and produced both distribution variants.
 - Standalone checks — passed for both files; neither contains runtime `import`, `export`, or `require` statements.
-- `dist/jitsi-meet-pip.js` — 63,742 bytes; SHA-256 `7d9118e2f8aad3698b120863aaf60f79db206f2fafcc0b39deb5a1bc7270529a`.
-- `dist/jitsi-meet-pip.min.js` — 42,072 bytes; SHA-256 `4314b4871922d3c8ae35ed9f70cac0f7eefb6284bdcbfd49250727643ca87808`.
+- `dist/jitsi-meet-pip.js` — 64,359 bytes; SHA-256 `753d14c79c5172191c35c0db9b3e08a1da18c96cff22f6ac401171a948dc4ace`.
+- `dist/jitsi-meet-pip.min.js` — 42,465 bytes; SHA-256 `166af602fe5fa376ba04c4c04bc33617a2391427112278dd450605bf7a219e69`.
 - Both bundles expose the same standalone API and contain the complete MIT copyright and permission notice.
 - `npm audit` — 0 known vulnerabilities at the previous dependency audit.
 
@@ -55,6 +55,7 @@ Verified behavior:
 - the local participant remains the first card, and one or three real cards are completed to two or four positions with an accessible placeholder;
 - the upper screen-share slot and lower participant section remain equal in height at the initial `320×640` size;
 - microphone and camera icons follow enabled and muted states;
+- the red hangup control clones the current filled SVG from the Jitsi toolbar and removes fixed icon dimensions;
 - conference and lobby counts update through Redux without reopening PiP;
 - all UI labels can be configured through `config.browserPip`, while the default title remains `PiP`;
 - the complete MIT text is embedded in both standalone bundles.

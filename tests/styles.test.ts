@@ -20,4 +20,9 @@ describe('Document PiP layout styles', () => {
             .toContain('.jmp-root { display: grid; grid-template-rows: 1fr auto auto;');
         expect(DOCUMENT_PIP_STYLES).toContain('.jmp-participant-counts');
     });
+
+    it('supports the filled Jitsi hangup icon', () => {
+        expect(DOCUMENT_PIP_STYLES)
+            .toContain('.jmp-control svg.jmp-icon-fill { fill: currentColor; stroke: none; }');
+    });
 });

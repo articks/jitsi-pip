@@ -38,6 +38,7 @@ body { background: #111827; }
 .jmp-control:hover { background: #4b5563; }
 .jmp-control:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
 .jmp-control svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.jmp-control svg.jmp-icon-fill { fill: currentColor; stroke: none; }
 .jmp-control.is-muted { background: #f3f4f6; color: #111827; }
 .jmp-control.is-danger { margin-left: 6px; background: #dc2626; }
 .jmp-control.is-danger:hover { background: #b91c1c; }

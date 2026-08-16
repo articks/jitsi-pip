@@ -1,5 +1,5 @@
 /*!
- * Jitsi Meet Browser PiP v1.2.10
+ * Jitsi Meet Browser PiP v1.2.11
  * https://github.com/articks/jitsi-pip
  *
  * MIT License
@@ -315,6 +315,7 @@ body { background: #111827; }
 .jmp-control:hover { background: #4b5563; }
 .jmp-control:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
 .jmp-control svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.jmp-control svg.jmp-icon-fill { fill: currentColor; stroke: none; }
 .jmp-control.is-muted { background: #f3f4f6; color: #111827; }
 .jmp-control.is-danger { margin-left: 6px; background: #dc2626; }
 .jmp-control.is-danger:hover { background: #b91c1c; }
@@ -339,7 +340,7 @@ body { background: #111827; }
   };
 
   // src/plugin.ts
-  var PLUGIN_VERSION = "1.2.10";
+  var PLUGIN_VERSION = "1.2.11";
   function isAutoPiPProtocolEligible(protocol) {
     return protocol === "https:" || protocol === "file:";
   }
@@ -794,7 +795,14 @@ body { background: #111827; }
           }
           void this.close();
         }),
-        this.createControl(document, "hangup", this.config.hangupLabel, ICONS.hangup, () => this.hangup(), true)
+        this.createControl(
+          document,
+          "hangup",
+          this.config.hangupLabel,
+          this.resolveHangupIcon(),
+          () => this.hangup(),
+          true
+        )
       );
       screenShareRoot.append(screenShareVideo, screenShareLabel);
       content.append(screenShareRoot, grid);
@@ -812,6 +820,20 @@ body { background: #111827; }
         video: screenShareVideo
       };
       this.updateParticipantCountSummary();
+    }
+    resolveHangupIcon() {
+      const source = this.host.document.querySelector(
+        ".hangup-button svg, .hangup-menu-button:not(.toggled) svg"
+      );
+      if (!source) {
+        return ICONS.hangup;
+      }
+      const clone = source.cloneNode(true);
+      clone.classList.add("jmp-icon-fill");
+      clone.setAttribute("aria-hidden", "true");
+      clone.removeAttribute("height");
+      clone.removeAttribute("width");
+      return clone.outerHTML;
     }
     createControl(document, action, label, icon, handler, danger = false) {
       const button = document.createElement("button");

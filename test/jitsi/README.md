@@ -39,7 +39,7 @@ The stack uses relative BOSH and disables XMPP WebSocket. `http://127.0.0.1:1800
 5. If no prompt appears, return to Jitsi. The plugin displays a diagnostic for the missing condition.
 6. Permission can be enabled manually through the site controls next to the address bar: Automatic Picture-in-Picture → Allow.
 
-After updating the plugin, fully reload the room. The test page loads `jitsi-meet-pip.min.js?v=1.2.10`, because Jitsi Nginx caches files under `/libs/` for one year.
+After updating the plugin, fully reload the room. The test page loads `jitsi-meet-pip.min.js?v=1.2.11`, because Jitsi Nginx caches files under `/libs/` for one year.
 
 Inspect readiness in the page console:
 
@@ -48,11 +48,11 @@ JitsiBrowserPiP.version
 JitsiBrowserPiP.getState().autoPiP
 ```
 
-Before switching tabs, expect `version === "1.2.10"`, `protocolEligible === true`, `secureContext === true`, `handlerRegistered === true`, `captureActive === true`, and `ready === true`.
+Before switching tabs, expect `version === "1.2.11"`, `protocolEligible === true`, `secureContext === true`, `handlerRegistered === true`, `captureActive === true`, and `ready === true`.
 
-## PiP 1.2.10 window verification
+## PiP 1.2.11 window verification
 
-1. Fully reload the room and confirm `JitsiBrowserPiP.version === "1.2.10"`.
+1. Fully reload the room and confirm `JitsiBrowserPiP.version === "1.2.11"`.
 2. Open PiP and confirm your card is first. With the camera disabled, the card must show your name and initials.
 3. With one or three real cards, confirm the unused position contains only a participant icon; the final grid must contain two or four positions.
 4. Share another window, the whole screen, or a tab, locally or remotely. The share must appear in the upper half above the participant grid.
