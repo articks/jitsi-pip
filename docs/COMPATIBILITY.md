@@ -1,46 +1,48 @@
-# Совместимость
+# Compatibility
+
+[Русский](COMPATIBILITY.ru.md) | English
 
 ## Jitsi Meet
 
-Целевая версия: `2.0.11146`, tag `stable/jitsi-meet_11146`, commit `48d96e4`.
+Target version: `2.0.11146`, tag `stable/jitsi-meet_11146`, commit `48d96e4`.
 
-Проверяемые контракты:
+Verified contracts:
 
-- `index.html` подключает `plugin.head.html` после `app.bundle.min.js`.
-- `app.js` публикует `window.APP` с `API` и `conference`.
-- `BaseApp` публикует Redux store как `APP.store`.
-- `customToolbarButtons` автоматически включаются в список кнопок toolbar.
-- Redux обрабатывает `OVERWRITE_CONFIG` и пересчитывает custom toolbar buttons после поздней синхронизации плагина.
-- Нажатие custom button вызывает `APP.API.notifyToolbarButtonClicked`.
-- Redux содержит `features/base/participants`, `features/base/tracks`, `features/large-video`, `features/video-layout` и `features/lobby.knockingParticipants`; адаптер понимает активных участников, локальный desktop track, виртуальные remote screen-share participants и очередь лобби.
+- `index.html` includes `plugin.head.html` after `app.bundle.min.js`.
+- `app.js` exposes `window.APP` with `API` and `conference`.
+- `BaseApp` exposes the Redux store as `APP.store`.
+- `customToolbarButtons` are automatically included in the toolbar button list.
+- Redux handles `OVERWRITE_CONFIG` and recalculates custom toolbar buttons after the plugin's late synchronization.
+- Clicking a custom button invokes `APP.API.notifyToolbarButtonClicked`.
+- Redux exposes `features/base/participants`, `features/base/tracks`, `features/large-video`, `features/video-layout`, and `features/lobby.knockingParticipants`. The adapter understands active participants, the local desktop track, virtual remote screen-share participants, and the lobby queue.
 
-Это внутренние интерфейсы Jitsi. После обновления необходимо запустить `npm run test:contract`, browser smoke-test и интеграционный тест `test/jitsi/`.
+These are internal Jitsi interfaces. After upgrading Jitsi, run `npm run test:contract`, the browser smoke test, and the `test/jitsi/` integration test.
 
-## Браузеры
+## Browsers
 
-| Возможность | Chrome/Edge | Firefox с Document PiP | Safari |
+| Capability | Chrome/Edge | Firefox with Document PiP | Safari |
 | --- | --- | --- | --- |
-| Несколько участников | Да | При наличии API | Нет |
-| Большая демонстрация + 4 участника | Да | При наличии Document PiP | Нет, только демонстрация |
-| Собственные кнопки | Да | При наличии API | Нет, системные |
-| Ручное открытие | Да | При наличии API | Да |
-| Auto PiP | Chrome/Edge 120+, HTTPS, активный захват и разрешение сайта | Feature detection | Не гарантируется |
-| Video PiP fallback | Да | Feature detection | Да |
+| Multiple participants | Yes | When the API is available | No |
+| Large screen share plus four participants | Yes | With Document PiP | No, screen share only |
+| Custom controls | Yes | When the API is available | No, system controls |
+| Manual opening | Yes | When the API is available | Yes |
+| Auto PiP | Chrome/Edge 120+, HTTPS, active capture, and site permission | Feature detection | Not guaranteed |
+| Video PiP fallback | Yes | Feature detection | Yes |
 
-Точные возможности определяются feature detection, а не User-Agent.
+Capabilities are selected through feature detection rather than User-Agent matching.
 
-Подписи standalone-окна не связаны с текущим языком Jitsi. Для любого браузера и языка их нужно явно задать в `config.browserPip`; по умолчанию используются русские подписи и заголовок `PiP`.
+Standalone-window labels do not follow the current Jitsi language. Configure them explicitly through `config.browserPip`; built-in defaults are Russian, and the default title is `PiP`.
 
-## Ограничения
+## Limitations
 
-- Требуется top-level страница Jitsi; Document PiP запрещён из iframe.
-- Ручной Document PiP доступен в secure context, включая локальные HTTP loopback origins.
-- Auto PiP Chromium имеет отдельную более строгую проверку и принимает только `https://` или `file://`; `http://localhost` и `http://127.0.0.1` не подходят.
-- Политика браузера или Permissions Policy может полностью запретить PiP.
-- Если стандартный Video PiP не получил ни camera track, ни `canvas.captureStream`, fallback временно недоступен.
-- При демонстрации самой вкладки Jitsi в PiP может возникать ожидаемый эффект рекурсивного «зеркала».
-- Верхняя и нижняя секции занимают по половине доступной высоты над панелью управления. Четыре карточки используют сетку `2×2`, две — один ряд на всю высоту нижней секции.
-- Число ожидающих в лобби доступно только в той мере, в какой Jitsi публикует `knockingParticipants` текущему пользователю; обычно полный список видят модераторы.
-- Принудительный возврат к начальному размеру `320×640` через `preferInitialWindowPlacement` поддерживается Chrome 130+; более старый Chromium может восстановить ранее выбранный пользователем размер.
-- Нативный запрос Auto PiP контролируется Chromium. Плагин не может принудительно показать его из `visibilitychange`.
-- Для Auto PiP Chrome требует одновременно живой `getUserMedia` capture, зарегистрированный Media Session handler и разрешение «Автоматическая картинка в картинке». Ручное открытие плагина от capture не зависит.
+- Jitsi must run as a top-level page; Document PiP is unavailable inside an iframe.
+- Manual Document PiP requires a secure context, including trusted local HTTP loopback origins.
+- Chromium Auto PiP applies stricter protocol checks and accepts only `https://` or `file://`; `http://localhost` and `http://127.0.0.1` are not eligible.
+- Browser policy or Permissions Policy can disable PiP completely.
+- If standard Video PiP has neither a camera track nor `canvas.captureStream`, the fallback is temporarily unavailable.
+- Sharing the Jitsi tab itself can produce an expected recursive mirror effect.
+- The top and bottom sections each occupy half of the content height above the controls. Four cards use a `2×2` grid; two cards use one row filling the lower section.
+- The lobby count is limited to the `knockingParticipants` data Jitsi exposes to the current user; moderators normally receive the complete list.
+- `preferInitialWindowPlacement` can force the initial `320×640` size only in Chrome 130+. Older Chromium versions may restore a user-selected size.
+- Chromium controls the native Auto PiP request. The plugin cannot force it from `visibilitychange`.
+- Chrome Auto PiP requires an active `getUserMedia` capture, a registered Media Session handler, and Automatic Picture-in-Picture site permission. Manual opening does not depend on capture.

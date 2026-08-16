@@ -24,7 +24,7 @@ import type {
     SelectedScreenShare
 } from './types';
 
-export const PLUGIN_VERSION = '1.2.9';
+export const PLUGIN_VERSION = '1.2.10';
 
 export function isAutoPiPProtocolEligible(protocol: string): boolean {
     return protocol === 'https:' || protocol === 'file:';

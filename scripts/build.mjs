@@ -1,4 +1,4 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,25 +15,38 @@ const legalBanner = [
 ].map(line => line ? ` * ${line}` : ' *')
     .join('\n');
 const debug = process.argv.includes('--debug');
-const outfile = resolve(projectRoot, debug
-    ? 'dist/jitsi-meet-pip.js'
-    : 'dist/jitsi-meet-pip.min.js');
+const distDirectory = resolve(projectRoot, 'dist');
+const outputs = debug
+    ? [ { filename: 'jitsi-meet-pip.js', minify: false, sourcemap: true } ]
+    : [
+        { filename: 'jitsi-meet-pip.js', minify: false, sourcemap: false },
+        { filename: 'jitsi-meet-pip.min.js', minify: true, sourcemap: false }
+    ];
 
-await mkdir(dirname(outfile), { recursive: true });
-await build({
-    banner: {
-        js: `/*!\n${legalBanner}\n */`
-    },
-    bundle: true,
-    entryPoints: [ resolve(projectRoot, 'src/index.ts') ],
-    format: 'iife',
-    legalComments: 'none',
-    minify: !debug,
-    outfile,
-    platform: 'browser',
-    sourcemap: debug,
-    target: [ 'chrome120', 'edge120', 'firefox115', 'safari16' ],
-    treeShaking: true
-});
+await mkdir(distDirectory, { recursive: true });
 
-console.log(`Built ${outfile}`);
+if (!debug) {
+    await rm(resolve(distDirectory, 'jitsi-meet-pip.js.map'), { force: true });
+}
+
+for (const output of outputs) {
+    const outfile = resolve(distDirectory, output.filename);
+
+    await build({
+        banner: {
+            js: `/*!\n${legalBanner}\n */`
+        },
+        bundle: true,
+        entryPoints: [ resolve(projectRoot, 'src/index.ts') ],
+        format: 'iife',
+        legalComments: 'none',
+        minify: output.minify,
+        outfile,
+        platform: 'browser',
+        sourcemap: output.sourcemap,
+        target: [ 'chrome120', 'edge120', 'firefox115', 'safari16' ],
+        treeShaking: true
+    });
+
+    console.log(`Built ${outfile}`);
+}

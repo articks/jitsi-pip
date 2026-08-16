@@ -1,6 +1,7 @@
 node_modules/
 dist/*.js
 dist/*.map
+!dist/jitsi-meet-pip.js
 !dist/jitsi-meet-pip.min.js
 .DS_Store
 coverage/

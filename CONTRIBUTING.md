@@ -1,15 +1,17 @@
-# Участие в разработке
+# Contributing
 
-Исправления, тесты, документация и предложения по улучшению приветствуются.
+[Русский](CONTRIBUTING.ru.md) | English
 
-## Порядок работы
+Bug fixes, tests, documentation, and improvement proposals are welcome.
 
-1. Создайте fork репозитория и отдельную ветку для изменения.
-2. Внесите изменение и добавьте или обновите тесты.
-3. Выполните `npm run check`.
-4. Обновите README и документы в `docs/`, если изменились поведение, конфигурация или совместимость.
-5. Откройте pull request с кратким описанием изменения и способа его проверки.
+## Workflow
 
-## Лицензия вкладов
+1. Fork the repository and create a dedicated branch for the change.
+2. Implement the change and add or update tests.
+3. Run `npm run check`.
+4. Update the README and documents under `docs/` if behavior, configuration, or compatibility changed.
+5. Open a pull request with a concise description of the change and how it was verified.
 
-Отправляя вклад, вы подтверждаете, что имеете право передать его проекту, и соглашаетесь лицензировать его на условиях [MIT License](LICENSE). Отдельное соглашение о передаче авторских прав (CLA) не требуется; авторство вклада сохраняется в истории Git.
+## Contribution license
+
+By submitting a contribution, you confirm that you have the right to provide it to the project and agree to license it under the [MIT License](LICENSE). No separate Contributor License Agreement is required; contribution authorship remains recorded in the Git history.

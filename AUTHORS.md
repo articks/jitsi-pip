@@ -1,5 +1,7 @@
-# Авторы
+# Authors
 
-Автор и первоначальный разработчик: [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
+[Русский](AUTHORS.ru.md) | English
 
-Вклад последующих авторов и участников сохраняется в истории Git и GitHub. Все вклады принимаются на условиях [MIT License](LICENSE).
+Author and original developer: [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
+
+Subsequent authors and contributors are credited through the Git and GitHub history. All contributions are accepted under the [MIT License](LICENSE).

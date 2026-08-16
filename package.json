@@ -1,6 +1,6 @@
 {
   "name": "jitsi-meet-pip",
-  "version": "1.2.9",
+  "version": "1.2.10",
   "private": true,
   "description": "Standalone multi-participant Picture-in-Picture plugin for Jitsi Meet",
   "author": "Dmitry Karasev <articks@gmail.com> (https://github.com/articks)",

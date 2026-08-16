@@ -1,74 +1,64 @@
-# Результаты проверки
+# Test results
 
-Дата: 14 августа 2026 года.
+[Русский](TEST_RESULTS.ru.md) | English
 
-## Автоматические проверки
+Date: August 16, 2026.
 
-- `npm run typecheck` — успешно.
-- Vitest — 4 test files, 34 теста успешно.
-- Контракт соседнего локального дерева Jitsi — успешно.
-- Контракт точного upstream-архива `stable/jitsi-meet_11146` — успешно.
-- Сборка esbuild — успешно.
-- Проверка standalone bundle — успешно, один файл без `import`, `export` и `require`.
-- Итоговый размер `dist/jitsi-meet-pip.min.js` — 42 070 байт.
-- SHA-256 bundle — `8abf1bf3aa1da769da6d79efc7805891e9ac34a16f18df5b2d2cba9e7ad8ea8c`.
-- Проверка standalone bundle подтверждает наличие `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` и полного текста разрешения MIT.
-- `npm audit` — 0 известных уязвимостей.
+## Automated checks
+
+- `npm run typecheck` — passed.
+- Vitest — 4 test files and 34 tests passed.
+- Contract test against the adjacent local Jitsi tree — passed.
+- Contract test against the exact upstream `stable/jitsi-meet_11146` archive — passed.
+- esbuild production build — passed and produced both distribution variants.
+- Standalone checks — passed for both files; neither contains runtime `import`, `export`, or `require` statements.
+- `dist/jitsi-meet-pip.js` — 63,742 bytes; SHA-256 `7d9118e2f8aad3698b120863aaf60f79db206f2fafcc0b39deb5a1bc7270529a`.
+- `dist/jitsi-meet-pip.min.js` — 42,072 bytes; SHA-256 `4314b4871922d3c8ae35ed9f70cac0f7eefb6284bdcbfd49250727643ca87808`.
+- Both bundles expose the same standalone API and contain the complete MIT copyright and permission notice.
+- `npm audit` — 0 known vulnerabilities at the previous dependency audit.
 
 ## Docker
 
-Полная команда `npm run check` успешно выполнена в локальном `node:24-bookworm` через Docker Compose project `jitsi-meet-pip-test`.
+The complete `npm run check` command has passed in a local `node:24-bookworm` container through the Docker Compose project `jitsi-meet-pip-test`.
 
-Отдельный интеграционный стек `jitsi-meet-pip-local` запущен на официальных образах `stable-11146-1`. Его `web`, `prosody`, `jicofo` и `jvb` привязаны только к localhost и используют конфигурацию из `test/jitsi/`.
+The separate `jitsi-meet-pip-local` integration stack uses official `stable-11146-1` images. Its `web`, `prosody`, `jicofo`, and `jvb` services bind only to localhost and use configuration under `test/jitsi/`.
 
-## Browser smoke-test
+## Browser smoke test
 
-Локальная страница `test/browser/index.html` запускалась в отдельном Docker-контейнере и открывалась по `127.0.0.1`.
+The local `test/browser/index.html` page was served from an isolated Docker container and opened through `127.0.0.1`.
 
-Подтверждено:
+Verified behavior:
 
-- bundle загружается и публикует `JitsiBrowserPiP`;
-- определяется режим `document`;
-- базовая версия выбирала четыре удалённых трека и корректно меняла их порядок;
-- toolbar event вызывает настоящее событие `document-pip-enter`;
-- ошибок и предупреждений в browser console нет.
+- the bundle loads and publishes `JitsiBrowserPiP`;
+- Document PiP support is detected;
+- four remote tracks can be selected and reordered;
+- the toolbar event produces a real `document-pip-enter` event;
+- the browser console contains no plugin errors or warnings during the normal scenario.
 
-Mock-сценарий версии `1.2.x` дополнен активной демонстрацией, локальным участником
-и переключателем screen share. Новая компоновка, порядок локальной карточки и
-плейсхолдеры проверены DOM/unit-тестами; длительное отображение настоящего
-Document PiP остаётся ручным smoke-test из-за ограничения встроенного браузера.
+The `1.2.x` mock includes an active screen share, a local participant, and a screen-share toggle. DOM and unit tests verify the portrait layout, local-card ordering, placeholders, controls, and counters. The embedded browser closes the secondary always-on-top window immediately after entry, so prolonged interaction with a real Document PiP window remains a manual smoke-test scenario.
 
-Ограничение среды: автоматизированный встроенный браузер закрывает вторичное always-on-top окно сразу после события входа. Поэтому длительное отображение окна, переключение mute/camera и hangup внутри него проверены изолированными DOM/unit-тестами. Финальная проверка этих действий на настоящей конференции должна выполняться после подключения JS к тестовой установке Jitsi.
+## Complete local Jitsi smoke test
 
-## Полный локальный Jitsi smoke-test
+Official Jitsi Meet `stable-11146-1` was opened at `https://127.0.0.1:18443/` with a dedicated local CA and a certificate covering `localhost` and `127.0.0.1`. The stack uses relative BOSH with XMPP WebSocket disabled.
 
-Официальный Jitsi Meet `stable-11146-1` открыт по `https://127.0.0.1:18443/` с отдельным локальным CA и сертификатом SAN для `localhost`/`127.0.0.1`. Используется относительный BOSH без XMPP WebSocket.
+Verified behavior:
 
-Подтверждено:
+- `plugin.head.html` loads the current minified bundle after `app.bundle.min.js`;
+- the bundle served by Jitsi matches the local production build;
+- the Picture-in-Picture toolbar item remains registered after Jitsi asynchronously reloads `config.js`;
+- multiple local browser clients can join the same room, and JVB completes ICE and DTLS;
+- Auto PiP distinguishes `contentoccluded` from `useraction`, synchronizes Media Session capture state, and reports missing browser events after returning;
+- Auto PiP registers again when a live local capture track appears and exposes protocol, secure-context, capture, and handler readiness;
+- HTTP loopback origins receive accurate HTTPS diagnostics instead of a false permission prompt;
+- manually closing automatic PiP suppresses further automatic openings for the current conference instance without disabling manual PiP;
+- the large tile selects and detaches remote and local desktop tracks without leaks;
+- the local participant remains the first card, and one or three real cards are completed to two or four positions with an accessible placeholder;
+- the upper screen-share slot and lower participant section remain equal in height at the initial `320×640` size;
+- microphone and camera icons follow enabled and muted states;
+- conference and lobby counts update through Redux without reopening PiP;
+- all UI labels can be configured through `config.browserPip`, while the default title remains `PiP`;
+- the complete MIT text is embedded in both standalone bundles.
 
-- `plugin.head.html` подключает актуальный bundle после `app.bundle.min.js`;
-- отдаваемый Jitsi bundle совпадает с локальной сборкой;
-- после асинхронной загрузки `config.js` кнопка «Картинка в картинке» присутствует в меню «Больше действий»;
-- несколько локальных browser-клиентов вошли в одну комнату;
-- Jicofo выбрал локальный JVB, а JVB завершил ICE и DTLS handshake для участников;
-- обнаруженное затирание custom-кнопки поздним `config.js` исправлено, добавлен regression unit-test.
-- Auto PiP различает `contentoccluded` и `useraction`, синхронизирует Media Session capture state и диагностирует отсутствие browser-события после возврата.
-- Версия `1.1.1` повторно регистрирует `enterpictureinpicture` при появлении живого локального capture track; regression-тест подтверждает этот переход.
-- Локальный Nginx кеширует файл из `/libs/` на год, поэтому `plugin.head.html` использует актуальный cache-busting URL `?v=1.2.9`; Jitsi отдаёт именно bundle `1.2.9`.
-- Версия `1.1.2` заполняет свободные позиции подключёнными удалёнными участниками, когда списки dominant/active speakers ещё пусты. Добавлены regression-тесты тихой конференции и приоритетного порядка.
-- Установлено, что Chromium до вызова Media Session отклоняет Auto PiP для любой схемы `http://`, включая loopback. Версия `1.1.3` проверяет протокол, публикует `protocolEligible` и показывает точную HTTPS-диагностику.
-- Версия `1.1.4` запоминает ручное закрытие автоматического окна до конца текущего экземпляра конференции, не подавляет ручной вызов и не принимает программное закрытие при возврате за отказ пользователя.
-- Версия `1.2.0` выбирает активный remote/local desktop track, показывает его большой плиткой над четырьмя участниками и отсоединяет без утечки при завершении демонстрации. Локальный пользователь закреплён первой карточкой, а сетка из одного или трёх участников дополняется плейсхолдером до двух или четырёх позиций.
-- Версия `1.2.1` сохраняет пропорции карточек `16:9`: без демонстрации используется сетка 2×2, под большой демонстрацией — компактный ряд из четырёх позиций.
-- Версия `1.2.2` уменьшает начальный Document PiP до `640×480` и использует `preferInitialWindowPlacement: true`, чтобы Chrome 130+ не восстанавливал прежний размер. Верхний screen-share slot теперь постоянный и показывает плейсхолдер без активного desktop track; две карточки заполняют высоту нижнего ряда, четыре сохраняют `16:9`.
-- Версия `1.2.3` переводит Document PiP в портретный размер `320×640`: верхняя и нижняя секции занимают по половине контента, четыре карточки заполняют нижнюю секцию сеткой `2×2`, две — одним рядом на всю высоту секции.
-- Версия `1.2.4` убирает видимый текст из пустых состояний: верхний slot показывает иконку экрана, свободная карточка — иконку пользователя. Доступные названия сохранены в `aria-label`.
-- Версия `1.2.5` синхронизирует иконки управления с состоянием конференции: включённые микрофон и камера имеют обычные SVG, выключенные — перечёркнутые; regression-тест проверяет обе ветви и доступные подписи.
-- Версия `1.2.6` добавляет самую нижнюю строку `Участники: N · В лобби: M`, исключает виртуальные screen-share participants из общего числа и динамически обновляет оба счётчика через Redux. Контракт проверяет `features/lobby.knockingParticipants`, regression-тест — переход `5/2 → 4/0` без переоткрытия PiP.
-- Версия `1.2.7` уточняет пользовательскую подпись счётчика до `Участников: N · В лобби: M`.
-- Версия `1.2.8` выносит в `config.browserPip` все подписи интерфейса: toolbar, заголовок Document PiP, кнопки и их mute-состояния, демонстрацию, fallback-имена, пустые состояния и счётчики. Заголовок окна по умолчанию — `PiP`. Regression-тесты проверяют нормализацию всех полей и их подстановку в DOM.
-- Версия `1.2.9` оформляет проект как открытое ПО под MIT License. Добавлены `LICENSE`, `NOTICE`, `AUTHORS.md`, `CONTRIBUTING.md`, юридическое описание и npm-метаданны. Полный MIT-текст встраивается в каждый standalone JS.
-- Локальный HTTPS отвечает по HTTP/2, цепочка успешно проверена с созданным CA, а Jitsi отдаёт bundle `1.2.9` с SHA-256 `8abf1bf3aa1da769da6d79efc7805891e9ac34a16f18df5b2d2cba9e7ad8ea8c`, совпадающим с локальной сборкой.
-- Локальный CA добавлен в login keychain текущей macOS-сессии по явному разрешению пользователя; `curl` открывает `https://127.0.0.1:18443/` без передачи собственного `--cacert`. Инструкция удаления зафиксирована в `test/jitsi/README.md`.
+The local HTTPS endpoint responds over HTTP/2, and its certificate chain was verified with the generated CA. The local CA was added to the current macOS login keychain only after explicit user approval; removal instructions are in [test/jitsi/README.md](../test/jitsi/README.md).
 
-Стек намеренно оставлен запущенным для ручной проверки. Команды запуска, логов и остановки находятся в `test/jitsi/README.md`.
+The stack was intentionally left available for manual testing. Start, log, and stop commands are documented in [test/jitsi/README.md](../test/jitsi/README.md).

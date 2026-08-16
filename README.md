@@ -1,22 +1,31 @@
 # Jitsi Meet Browser PiP
 
-Standalone-плагин для Jitsi Meet, который открывает отдельное окно Picture-in-Picture с несколькими активными собеседниками и кнопками управления конференцией.
+[Русский](README.ru.md) | English
 
-Открытое программное обеспечение под [MIT License](LICENSE): разрешены любое использование, доработка и дистрибуция, включая коммерческие, при сохранении уведомления об авторстве и текста лицензии. Автор — [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
+A standalone Jitsi Meet plugin that opens a separate Picture-in-Picture window with multiple active participants and conference controls.
 
-Плагин разработан и проверяется относительно Jitsi Meet `2.0.11146` (`stable/jitsi-meet_11146`, commit `48d96e4`). Он использует внутренние объекты `window.APP`, `APP.store` и `APP.conference`, поэтому после обновления Jitsi необходимо повторять контрактный тест.
+This is open source software distributed under the [MIT License](LICENSE). Any use, modification, and distribution, including commercial use, is permitted as long as the copyright notice and license text are retained. Author: [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
 
-## Подключение
+The plugin is developed and tested against Jitsi Meet `2.0.11146` (`stable/jitsi-meet_11146`, commit `48d96e4`). It uses the internal `window.APP`, `APP.store`, and `APP.conference` objects, so the contract test must be repeated after upgrading Jitsi.
 
-Скопируйте `dist/jitsi-meet-pip.min.js` в доступный Jitsi каталог, например `/usr/share/jitsi-meet/libs/`, и добавьте в `plugin.head.html`:
+## Installation
+
+For production, copy `dist/jitsi-meet-pip.min.js` to a directory served by Jitsi, such as `/usr/share/jitsi-meet/libs/`, and add this to `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.9"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.10"></script>
 ```
 
-`plugin.head.html` штатного Jitsi 2.0.11146 подключается после `app.bundle.min.js`. Плагин сначала добавляет кнопку в глобальный `config.customToolbarButtons`, а после появления `APP.store` синхронизирует её с Redux-конфигурацией. Это сохраняет кнопку даже при асинхронной повторной загрузке `config.js` самим Jitsi.
+The stock Jitsi Meet 2.0.11146 `plugin.head.html` is included after `app.bundle.min.js`. The plugin first adds its button to the global `config.customToolbarButtons` array and synchronizes it with the Redux configuration after `APP.store` becomes available. This keeps the button registered even when Jitsi asynchronously reloads `config.js`.
 
-Изменять `config.js` необязательно. При необходимости перед подключением плагина можно определить настройки:
+A regular `npm run build` produces two functionally identical standalone files with no runtime dependencies:
+
+- `dist/jitsi-meet-pip.min.js` — minified production bundle;
+- `dist/jitsi-meet-pip.js` — readable unminified bundle for auditing and debugging.
+
+`npm run build:debug` additionally creates a source map for the unminified file.
+
+Changing `config.js` is optional. To customize the plugin, define these settings before loading it:
 
 ```js
 config.browserPip = {
@@ -26,71 +35,71 @@ config.browserPip = {
     includeLocalScreenShare: true,
     maxParticipants: 4,
     closeAutoOnReturn: true,
-    buttonText: 'Картинка в картинке',
+    buttonText: 'Picture in Picture',
     windowTitle: 'PiP',
-    microphoneLabel: 'Микрофон',
-    cameraLabel: 'Камера',
-    enableMicrophoneLabel: 'Включить микрофон',
-    disableMicrophoneLabel: 'Выключить микрофон',
-    enableCameraLabel: 'Включить камеру',
-    disableCameraLabel: 'Выключить камеру',
-    returnToConferenceLabel: 'Вернуться в конференцию',
-    hangupLabel: 'Завершить звонок',
-    noScreenShareLabel: 'Нет активной демонстрации',
-    waitingParticipantLabel: 'Ожидаем участника',
-    noActiveSpeakerLabel: 'Нет активного собеседника',
-    participantLabel: 'Участник',
-    screenShareLabel: 'Демонстрация',
-    youLabel: 'Вы',
-    participantsLabel: 'Участников',
-    lobbyLabel: 'В лобби'
+    microphoneLabel: 'Microphone',
+    cameraLabel: 'Camera',
+    enableMicrophoneLabel: 'Turn on microphone',
+    disableMicrophoneLabel: 'Turn off microphone',
+    enableCameraLabel: 'Turn on camera',
+    disableCameraLabel: 'Turn off camera',
+    returnToConferenceLabel: 'Return to conference',
+    hangupLabel: 'Hang up',
+    noScreenShareLabel: 'No active screen share',
+    waitingParticipantLabel: 'Waiting for a participant',
+    noActiveSpeakerLabel: 'No active speaker',
+    participantLabel: 'Participant',
+    screenShareLabel: 'Screen share',
+    youLabel: 'You',
+    participantsLabel: 'Participants',
+    lobbyLabel: 'In lobby'
 };
 ```
 
-## Подписи и локализация
+## Labels and localization
 
-Плагин standalone и не читает языковые файлы Jitsi. Все подписи его интерфейса задаются в `config.browserPip`; в примере выше указаны все значения по умолчанию: русские подписи и заголовок окна `PiP`.
+The standalone plugin does not read Jitsi language files. All UI labels are configured through `config.browserPip`. The example above provides an English localization; built-in defaults remain Russian, while the default window title is `PiP`.
 
-| Поле | Где используется |
+| Field | Usage |
 | --- | --- |
-| `buttonText` | Кнопка в toolbar Jitsi |
-| `windowTitle` | Заголовок Document PiP |
-| `microphoneLabel`, `cameraLabel` | Исходные доступные имена кнопок |
-| `enableMicrophoneLabel`, `disableMicrophoneLabel` | Действие кнопки микрофона |
-| `enableCameraLabel`, `disableCameraLabel` | Действие кнопки камеры |
-| `returnToConferenceLabel` | Возврат в основное окно |
-| `hangupLabel` | Завершение звонка |
-| `screenShareLabel`, `youLabel` | Подпись активной демонстрации, включая собственную |
-| `participantLabel` | Имя участника, если Jitsi не передал имя |
-| `noScreenShareLabel`, `waitingParticipantLabel` | `aria-label` иконок пустых состояний |
-| `noActiveSpeakerLabel` | Текст fallback Video PiP без участника |
-| `participantsLabel`, `lobbyLabel` | Подписи динамических счётчиков |
+| `buttonText` | Jitsi toolbar button |
+| `windowTitle` | Document PiP window title |
+| `microphoneLabel`, `cameraLabel` | Initial accessible button names |
+| `enableMicrophoneLabel`, `disableMicrophoneLabel` | Microphone button action |
+| `enableCameraLabel`, `disableCameraLabel` | Camera button action |
+| `returnToConferenceLabel` | Return to the main conference window |
+| `hangupLabel` | End the call |
+| `screenShareLabel`, `youLabel` | Active screen-share label, including a local share |
+| `participantLabel` | Participant fallback name |
+| `noScreenShareLabel`, `waitingParticipantLabel` | Empty-state icon `aria-label` values |
+| `noActiveSpeakerLabel` | Video PiP fallback text when no participant is available |
+| `participantsLabel`, `lobbyLabel` | Dynamic counter labels |
 
-Пустая или состоящая только из пробелов подпись заменяется значением по умолчанию. Диагностические сообщения Auto PiP о протоколе, capture и разрешении сайта остаются системными сообщениями плагина.
+An empty or whitespace-only label falls back to its built-in value. Auto PiP diagnostic messages about protocol, capture, and site permission are internal plugin messages and are not configurable UI labels.
 
-## Поведение
+## Behavior
 
-- Первая карточка нижней сетки всегда принадлежит локальному пользователю; за ней располагаются до трёх удалённых активных участников. Локальная камера отображается зеркально, а при её выключении показываются имя и инициалы. Всего — максимум четыре карточки.
-- Сетка всегда содержит две или четыре позиции: при одном или трёх участниках свободное место заполняется карточкой с иконкой пользователя без текстовой подписи.
-- Область над кнопками всегда делится пополам: верхняя половина отведена демонстрации экрана, нижняя — участникам. Четыре карточки заполняют нижнюю половину сеткой `2×2`, а две располагаются в один ряд и растягиваются на всю её высоту.
-- Начальный размер Document PiP — `320×640`; Chrome 130+ получает `preferInitialWindowPlacement: true`, поэтому не восстанавливает старый размер при повторном открытии. Пользователь может изменять текущее окно вручную, а браузер вправе дополнительно ограничить размер доступным экраном.
-- Активная демонстрация экрана отображается большой плиткой над сеткой участников. Поддерживаются удалённая и собственная демонстрации; отдельный desktop track не заменяет локальную карточку камеры внизу.
-- При нескольких демонстрациях выбирается экран на большой сцене Jitsi, затем последняя удалённая или локальная демонстрация.
-- Верхний блок демонстрации присутствует всегда. Без screen share он показывает иконку экрана без текстовой подписи; при запуске и остановке демонстрации внешняя компоновка окна не меняется.
-- Shared video не добавляется.
-- При выключенной камере отображаются имя и инициалы.
-- Звук продолжает воспроизводиться только основным окном Jitsi.
-- Доступны кнопки микрофона, камеры, возврата в конференцию и завершения звонка. Включённые микрофон и камера показываются обычными иконками, выключенные — перечёркнутыми; подписи кнопок также меняются на «Включить»/«Выключить».
-- Под панелью управления находится компактная строка `Участников: N · В лобби: M`. Подписи задаются через `participantsLabel` и `lobbyLabel`; значения обновляются через подписку Redux без переоткрытия PiP. В число участников не входят демонстрации экрана и другие виртуальные плитки.
-- Автоматически открытое окно закрывается при возврате на вкладку Jitsi. Окно, открытое кнопкой, остаётся открытым.
-- Если пользователь сам закрывает автоматически открытое окно, Auto PiP больше не срабатывает до перезагрузки страницы или следующего входа в конференцию. Ручная кнопка PiP продолжает работать.
-- В Safari и других браузерах без Document PiP стандартный Video PiP показывает активную демонстрацию, а при её отсутствии — одного говорящего, с системными элементами управления.
+- The first card in the lower grid is always the local user, followed by up to three active remote participants. The local camera is mirrored; if it is disabled, the card shows the participant name and initials. The maximum is four cards.
+- The grid always contains two or four positions. With one or three real cards, the unused position is filled by an unlabeled participant icon placeholder.
+- The area above the controls is always split into two equal sections: screen sharing at the top and participant cards at the bottom. Four cards use a `2×2` grid; two cards use one row and fill the lower section vertically.
+- The initial Document PiP size is `320×640`. Chrome 130+ receives `preferInitialWindowPlacement: true`, preventing restoration of an older saved size. The user can still resize the window, and the browser may constrain it to available screen space.
+- An active screen share is displayed in a large tile above the participant grid. Remote and local screen shares are supported; a separate desktop track does not replace the local camera card.
+- When multiple screen shares exist, the plugin prefers the source on Jitsi's large stage, followed by the most recent remote or local share.
+- The screen-share slot is always present. Without a share, it displays an unlabeled screen icon, so starting and stopping a share does not change the outer layout.
+- Shared video is not added as a participant card.
+- If a participant has no active camera track, the plugin shows an avatar or initials.
+- Audio remains in the main Jitsi document to avoid duplicate playback and echo.
+- Controls are available for microphone, camera, returning to the conference, and hanging up. Enabled microphone and camera states use regular icons; disabled states use crossed-out icons and updated accessible action labels.
+- A compact `Participants: N · In lobby: M` row appears below the controls. The labels come from `participantsLabel` and `lobbyLabel`, and the values update through the Redux subscription without reopening PiP. Screen-share and other virtual participants are excluded.
+- An automatically opened PiP window closes when the Jitsi tab becomes visible again. A manually opened window remains open.
+- If the user manually closes an automatically opened window, Auto PiP remains suppressed until the page is reloaded or the user joins a new conference. Manual PiP remains available.
+- Safari and browsers without Document PiP use standard Video PiP, showing the active screen share or one active speaker with browser-provided controls.
 
-Автоматическое открытие зависит от браузера. В Chrome/Edge оно требует URL с реальной схемой `https://` (локальный `http://127.0.0.1` не подходит), активного захвата камеры или микрофона, обработчика Media Session и разрешения сайта на Automatic Picture-in-Picture. Ручной вызов требует действия пользователя. Document PiP работает в HTTPS top-level странице, а для локальной ручной разработки — также на доверенном `localhost`/`127.0.0.1`; внутри iframe он не поддерживается.
+Automatic opening is controlled by the browser. Chrome and Edge require a real `https://` URL (local `http://127.0.0.1` is not sufficient), an active camera or microphone capture, a Media Session handler, and Automatic Picture-in-Picture site permission. Manual opening requires a user gesture. Document PiP requires a secure top-level page; trusted `localhost` and `127.0.0.1` origins are also usable for local manual development. Document PiP is not available inside an iframe.
 
-Версия 1.1 различает причины Media Session: `contentoccluded` открывает автоматическое окно при скрытии вкладки, а `useraction` считается ручным запуском из медиаконтролов Chrome. Состояние локальных камеры и микрофона передаётся в Media Session. Если Chrome не отправил Auto PiP событие, после возврата плагин показывает причину: отсутствует активный захват либо нужно разрешение сайта.
+The plugin distinguishes Media Session reasons: `contentoccluded` opens an automatic window when the tab is hidden, while `useraction` is treated as a manual request from Chrome media controls. Local camera and microphone states are synchronized with Media Session. If Chrome does not send an Auto PiP event, the plugin explains the missing capture or site permission after the user returns to Jitsi.
 
-## Публичный API
+## Public API
 
 ```js
 await window.JitsiBrowserPiP.open();
@@ -99,34 +108,30 @@ window.JitsiBrowserPiP.getState();
 window.JitsiBrowserPiP.destroy();
 ```
 
-`getState().autoPiP` содержит диагностику автоматического режима: активность
-локального захвата, успешность регистрации Media Session, защищённость контекста,
-готовность, последнюю причину события Chrome, последнюю ошибку и флаг
-`suppressedByUser`, показывающий отказ пользователя от повторного Auto PiP в этой сессии.
+`getState().autoPiP` exposes automatic-mode diagnostics: local capture activity, Media Session registration, secure-context and protocol eligibility, readiness, the last Chrome event reason, the last error, and the `suppressedByUser` flag.
 
-`getState().screenShare` содержит идентификатор, подпись и признак локальной
-активной демонстрации либо отсутствует, если никто не показывает экран.
+`getState().screenShare` contains the active share identifier, label, and local flag, or is absent when no screen share is active.
 
-`open()` должен вызываться непосредственно из обработчика пользовательского действия, если браузер не инициировал Auto PiP самостоятельно.
+If the browser did not initiate Auto PiP itself, call `open()` directly from a user-action handler.
 
-## Разработка и тесты
+## Development and testing
 
 ```bash
 npm install
 npm run check
 ```
 
-Локально через Docker:
+Run the checks in local Docker:
 
 ```bash
 docker compose -p jitsi-meet-pip-test -f test/docker/compose.yml run --rm test
 ```
 
-Команда использует только каталог проекта. Публикация образов, deploy и обращения с записью к внешним системам не выполняются.
+The command uses only the project directory. It does not publish images, deploy software, or write to external systems.
 
-Полноценный локальный Jitsi с подключённым плагином запускается по инструкции [test/jitsi/README.md](test/jitsi/README.md). Для Auto PiP интерфейс доступен по `https://127.0.0.1:18443/` после доверия локальному CA; HTTP-порт `18000` оставлен только для ручного PiP.
+Use [test/jitsi/README.md](test/jitsi/README.md) to run a complete local Jitsi instance with the plugin. Auto PiP is available at `https://127.0.0.1:18443/` after trusting the local CA. Port `18000` remains available for manual PiP only.
 
-Ручной browser smoke-test:
+Manual browser smoke test:
 
 ```bash
 docker run --rm --name jitsi-meet-pip-smoke \
@@ -135,16 +140,16 @@ docker run --rm --name jitsi-meet-pip-smoke \
   node:24-bookworm node test/browser/server.mjs
 ```
 
-После этого откройте `http://127.0.0.1:4173/test/browser/`. Страница содержит локальный mock Jitsi с четырьмя видеопотоками и загружает тот же `dist/jitsi-meet-pip.min.js`, который предназначен для установки.
+Then open `http://127.0.0.1:4173/test/browser/`. The page contains a local mock Jitsi environment with four video streams and loads the same minified bundle intended for installation.
 
-Контрактный тест по умолчанию читает соседний `../jitsi-meet`. Другой каталог можно передать переменной:
+The contract test reads the adjacent `../jitsi-meet` directory by default. Override it with:
 
 ```bash
 JITSI_SOURCE_DIR=/path/to/jitsi-meet npm run test:contract
 ```
 
-## Лицензия
+## License
 
-Проект распространяется под [MIT License](LICENSE). Вы можете свободно использовать, изменять, публиковать и распространять его при сохранении `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` и текста MIT License. Подробности и список документов — в разделе [«Лицензия и авторство»](docs/LEGAL.md).
+The project is distributed under the [MIT License](LICENSE). You may use, modify, publish, and distribute it as long as `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` and the MIT License text are retained. See [License and authorship](docs/LEGAL.md) for details.
 
-Дополнительная информация: [план](docs/PLAN.md), [решения](docs/DECISIONS.md), [совместимость](docs/COMPATIBILITY.md), [результаты тестирования](docs/TEST_RESULTS.md), [лицензия и авторство](docs/LEGAL.md).
+Additional documentation: [plan](docs/PLAN.md), [decisions](docs/DECISIONS.md), [compatibility](docs/COMPATIBILITY.md), [test results](docs/TEST_RESULTS.md), and [license and authorship](docs/LEGAL.md).

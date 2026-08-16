@@ -1,14 +1,16 @@
-# Локальный Jitsi с Browser PiP
+# Local Jitsi with Browser PiP
 
-Стек использует официальные Docker-образы `stable-11146-1` и существующий соседний compose-файл `jitsi-meet-docker/docker-compose.yml`, не изменяя его.
+[Русский](README.ru.md) | English
 
-## Запуск
+This stack uses the official `stable-11146-1` Docker images and the adjacent `jitsi-meet-docker/docker-compose.yml` file without modifying it.
 
-Из корня `jitsi-meet-pip`:
+## Start
+
+From the `jitsi-meet-pip` root:
 
 ```bash
 cp test/jitsi/.env.example test/jitsi/.env
-# Замените CONFIG и PIP_PROJECT_DIR в test/jitsi/.env на абсолютные пути текущего checkout.
+# Replace CONFIG and PIP_PROJECT_DIR in test/jitsi/.env with absolute paths for this checkout.
 
 bash test/jitsi/generate-local-cert.sh
 
@@ -20,64 +22,51 @@ docker compose \
   up -d web prosody jicofo jvb
 ```
 
-Скрипт создаёт отдельный локальный CA и сертификат с SAN для `localhost` и
-`127.0.0.1`. Файлы находятся только в игнорируемом каталоге
-`test/jitsi/config/` и никуда не отправляются.
+The certificate script creates a dedicated local CA and a certificate with SAN entries for `localhost` and `127.0.0.1`. Files remain under the ignored `test/jitsi/config/` directory and are not uploaded anywhere.
 
-Чтобы Chrome признал HTTPS защищённым, откройте файл
-`test/jitsi/config/local-ca/ca.crt` в Keychain Access, добавьте его в связку
-ключей входа и установите для сертификата «Доверять всегда». Затем полностью
-перезапустите Chrome.
+To make Chrome treat the origin as secure, open `test/jitsi/config/local-ca/ca.crt` in Keychain Access, add it to the login keychain, set the certificate to Always Trust, and fully restart Chrome.
 
-Откройте `https://127.0.0.1:18443/`, создайте комнату и подключите второй
-браузер или приватное окно. Кнопка «Картинка в картинке» появится в toolbar
-после входа в комнату.
+Open `https://127.0.0.1:18443/`, create a room, and join it from another browser or private window. The Picture-in-Picture button appears in the toolbar after joining.
 
-Стек использует относительный BOSH и отключает XMPP WebSocket. HTTP-порт
-`http://127.0.0.1:18000/` также остаётся доступен для ручного PiP, но Chromium
-намеренно запрещает Auto PiP для любой схемы `http://`, включая loopback.
+The stack uses relative BOSH and disables XMPP WebSocket. `http://127.0.0.1:18000/` remains available for manual PiP, but Chromium intentionally rejects Auto PiP for every `http://` origin, including loopback.
 
-## Проверка Auto PiP
+## Auto PiP verification
 
-1. Используйте обычное окно desktop Chrome/Edge, не инкогнито.
-2. Убедитесь, что адрес начинается с `https://127.0.0.1:18443/` и Chrome не показывает ошибку сертификата.
-3. Войдите в комнату, включите хотя бы микрофон или камеру и разрешите доступ.
-4. Переключитесь на другую вкладку. При первом подходящем запуске Chromium показывает нативный запрос Automatic Picture-in-Picture.
-5. Если запроса нет, вернитесь в Jitsi: плагин покажет подсказку о конкретном неподходящем условии.
-6. Разрешение можно включить вручную: значок сведений о сайте возле адресной строки → «Автоматическая картинка в картинке» → «Разрешить».
+1. Use a regular desktop Chrome or Edge window, not Incognito or InPrivate.
+2. Confirm the address begins with `https://127.0.0.1:18443/` and Chrome reports no certificate error.
+3. Join a room, enable at least the microphone or camera, and grant capture permission.
+4. Switch to another tab. On the first eligible attempt, Chromium displays its native Automatic Picture-in-Picture permission prompt.
+5. If no prompt appears, return to Jitsi. The plugin displays a diagnostic for the missing condition.
+6. Permission can be enabled manually through the site controls next to the address bar: Automatic Picture-in-Picture → Allow.
 
-После обновления плагина полностью перезагрузите комнату. Текущая тестовая сборка
-подключается как `jitsi-meet-pip.min.js?v=1.2.9`, потому что Nginx Jitsi кеширует
-файлы `/libs/` на один год.
+After updating the plugin, fully reload the room. The test page loads `jitsi-meet-pip.min.js?v=1.2.10`, because Jitsi Nginx caches files under `/libs/` for one year.
 
-В консоли страницы можно проверить готовность:
+Inspect readiness in the page console:
 
 ```js
 JitsiBrowserPiP.version
 JitsiBrowserPiP.getState().autoPiP
 ```
 
-Перед переключением вкладки ожидаются `version === "1.2.9"`,
-`protocolEligible === true`, `secureContext === true`,
-`handlerRegistered === true`, `captureActive === true` и `ready === true`.
+Before switching tabs, expect `version === "1.2.10"`, `protocolEligible === true`, `secureContext === true`, `handlerRegistered === true`, `captureActive === true`, and `ready === true`.
 
-## Проверка окна PiP 1.2.9
+## PiP 1.2.10 window verification
 
-1. Полностью перезагрузите комнату и убедитесь, что `JitsiBrowserPiP.version === "1.2.9"`.
-2. Откройте PiP и проверьте, что ваша карточка стоит первой. При выключенной камере должны отображаться имя и инициалы.
-3. При одной или трёх реальных карточках проверьте наличие свободной позиции только с иконкой пользователя, без подписи; итоговая сетка должна иметь две или четыре позиции.
-4. Запустите демонстрацию другого окна, всего экрана или вкладки — удалённую либо собственную. Демонстрация должна появиться в верхней половине окна над сеткой из четырёх позиций.
-5. Проверьте в консоли `JitsiBrowserPiP.getState().screenShare`: для собственной демонстрации ожидается `local === true`.
-6. Остановите демонстрацию. Медиатрек должен отсоединиться, а верхний блок — показать только иконку экрана без перестроения окна.
-7. Проверьте нижнюю половину: четыре карточки должны образовать сетку `2×2`, а две — один ряд и заполнить всю высоту блока.
-8. При каждом открытии в Chrome 130+ ожидается портретный размер около `320×640`; браузер может скорректировать его под доступное место. Более старый Chromium может восстановить пользовательский размер окна.
-9. Включите и выключите микрофон и камеру из Jitsi и из PiP: включённое состояние должно показывать обычную иконку, выключенное — перечёркнутую.
-10. Проверьте самую нижнюю строку `Участников: N · В лобби: M`: числа должны меняться без переоткрытия PiP при входе/выходе участника и при появлении/допуске пользователя из лобби.
-11. Измените несколько полей подписей в `plugin.head.html`, полностью перезагрузите комнату и проверьте toolbar, заголовок PiP, подсказки кнопок, подпись демонстрации и строку счётчиков. Полный список полей приведён в корневом `README.md`.
+1. Fully reload the room and confirm `JitsiBrowserPiP.version === "1.2.10"`.
+2. Open PiP and confirm your card is first. With the camera disabled, the card must show your name and initials.
+3. With one or three real cards, confirm the unused position contains only a participant icon; the final grid must contain two or four positions.
+4. Share another window, the whole screen, or a tab, locally or remotely. The share must appear in the upper half above the participant grid.
+5. Inspect `JitsiBrowserPiP.getState().screenShare`; a local share must report `local === true`.
+6. Stop sharing. The track must detach, and the upper slot must return to the unlabeled screen icon without changing the outer layout.
+7. Confirm four cards form a `2×2` grid and two cards form one row filling the lower section vertically.
+8. Chrome 130+ should open near `320×640`; the browser may constrain the size to available screen space. Older Chromium versions may restore a user-selected size.
+9. Toggle microphone and camera from both Jitsi and PiP. Enabled states must use regular icons and muted states crossed-out icons.
+10. Verify the bottom `Participants: N · In lobby: M` row using English `config.browserPip` labels. Values must change without reopening PiP when participants join or leave and lobby users appear or are admitted.
+11. Change several label fields in `plugin.head.html`, fully reload the room, and verify the toolbar, PiP title, control tooltips, share label, and counters. The complete field list is in the root [README](../../README.md).
 
-Если демонстрируется сама вкладка Jitsi, рекурсивный эффект «зеркала» является ожидаемым поведением захвата экрана.
+Sharing the Jitsi tab itself produces an expected recursive mirror effect.
 
-## Состояние и логи
+## Status and logs
 
 ```bash
 docker compose --project-name jitsi-meet-pip-local --env-file test/jitsi/.env \
@@ -87,15 +76,13 @@ docker compose --project-name jitsi-meet-pip-local --env-file test/jitsi/.env \
   -f ../jitsi-meet-docker/docker-compose.yml -f test/jitsi/override.yml logs --tail=100
 ```
 
-## Остановка
+## Stop
 
 ```bash
 docker compose --project-name jitsi-meet-pip-local --env-file test/jitsi/.env \
   -f ../jitsi-meet-docker/docker-compose.yml -f test/jitsi/override.yml down
 ```
 
-Все опубликованные TCP-порты и JVB UDP привязаны только к `127.0.0.1`. Конфигурация и данные находятся в `test/jitsi/config/`.
+All published TCP ports and JVB UDP bind only to `127.0.0.1`. Configuration and data remain under `test/jitsi/config/`.
 
-Если локальный CA больше не нужен, удалите сертификат
-«Jitsi Meet PiP Local Development CA» через Keychain Access, а затем удалите
-игнорируемый каталог `test/jitsi/config/local-ca/`.
+If the local CA is no longer needed, remove “Jitsi Meet PiP Local Development CA” through Keychain Access, then delete the ignored `test/jitsi/config/local-ca/` directory.

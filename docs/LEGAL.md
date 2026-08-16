@@ -1,27 +1,29 @@
-# Лицензия и авторство
+# License and authorship
 
-## Статус проекта
+[Русский](LEGAL.ru.md) | English
 
-Jitsi Meet Browser PiP — открытое программное обеспечение под стандартной [MIT License](../LICENSE). Автор и первоначальный разработчик — [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
+## Project status
 
-MIT License разрешает без ограничений:
+Jitsi Meet Browser PiP is open source software distributed under the standard [MIT License](../LICENSE). The author and original developer is [Dmitry Karasev](https://github.com/articks) <articks@gmail.com>.
 
-- использовать проект в личных, внутренних и коммерческих целях;
-- копировать, изменять и объединять код с другими проектами;
-- публиковать, распространять, сублицензировать и продавать копии;
-- передавать те же права другим лицам.
+The MIT License permits, without restriction:
 
-Единственное обязательное условие: в копиях или существенных частях проекта нужно сохранять уведомление `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` и текст MIT License. Лицензия не требует предварительного разрешения автора, публикации исходного кода производной работы или распространения производной работы под MIT.
+- personal, internal, and commercial use;
+- copying, modification, and merging with other projects;
+- publication, distribution, sublicensing, and sale of copies;
+- granting the same rights to other people.
 
-## Документы
+The only mandatory condition is that copies or substantial portions retain `Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>` and the MIT License text. The license does not require prior permission from the author, publication of derivative source code, or distribution of derivatives under MIT.
 
-- [`LICENSE`](../LICENSE) — канонический текст MIT License, который GitHub может автоматически распознать.
-- [`NOTICE`](../NOTICE) — краткое уведомление об авторстве, условиях распространения и независимости проекта.
-- [`AUTHORS.md`](../AUTHORS.md) — список авторов и правило учёта вкладов.
-- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — порядок доработки и лицензирования вкладов.
+## Documents
 
-## Сторонние проекты и товарные знаки
+- [`LICENSE`](../LICENSE) — canonical MIT License text recognized by GitHub.
+- [`NOTICE`](../NOTICE) — concise authorship, distribution, and independence notice.
+- [`AUTHORS.md`](../AUTHORS.md) — author list and contribution attribution policy.
+- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — contribution and contribution-licensing workflow.
 
-Плагин интегрируется с Jitsi Meet, но не содержит и не перераспространяет код Jitsi Meet. Сборка `dist/jitsi-meet-pip.min.js` не содержит runtime-зависимостей; npm-пакеты из `devDependencies` используются только для локальной сборки и тестов и остаются под своими лицензиями.
+## Third-party projects and trademarks
 
-Проект не аффилирован с 8x8, Inc. или Jitsi. Названия и товарные знаки Jitsi и Jitsi Meet принадлежат их правообладателям.
+The plugin integrates with Jitsi Meet but does not contain or redistribute Jitsi Meet code. The `dist/jitsi-meet-pip.js` and `dist/jitsi-meet-pip.min.js` bundles have no runtime dependencies. Packages listed in `devDependencies` are used only for local builds and tests and remain under their respective licenses.
+
+This project is not affiliated with or endorsed by 8x8, Inc. or the Jitsi project. The Jitsi and Jitsi Meet names and trademarks belong to their respective owners.
