@@ -28,7 +28,7 @@
 - PiP videos are muted. Conference audio remains in the main document.
 - Missing camera video is replaced by an avatar or initials.
 - Microphone and camera icons follow the current Jitsi state. Muted states use crossed-out SVG icons and update `title` and `aria-label` with the available action.
-- The hangup control clones the current filled SVG from Jitsi's `.hangup-button` or non-toggled `.hangup-menu-button`; a standalone outline icon is retained only as a fallback when no hangup icon is available. Excluding the toggled menu prevents copying Jitsi's close-menu icon.
+- The hangup control uses a standalone filled SVG defined by the plugin. It follows the visual language of Jitsi's call-ending control without reading or cloning toolbar DOM.
 - The bottom row shows the number of real conference participants, including the local user, and the length of `features/lobby.knockingParticipants`. Both values use the same Redux subscription as the tiles and are exposed through `getState().participantCounts`.
 - PiP labels are independent of Jitsi i18n. Standalone configuration covers the toolbar, window title, controls, tiles, empty states, and counters. Whitespace-only values fall back to built-in Russian labels; the default title is `PiP`.
 - Auto PiP diagnostic toasts are internal plugin messages rather than window labels.

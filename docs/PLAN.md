@@ -38,6 +38,7 @@ Create a standalone plugin for Jitsi Meet 2.0.11146 that is installed as JavaScr
 28. ✅ Publish the project under the MIT License with authorship, contribution rules, package metadata, and a complete embedded license notice.
 29. ✅ Add a complete English documentation set as the repository default, retain Russian `.ru.md` translations, and publish the readable `dist/jitsi-meet-pip.js` bundle alongside the minified build; release `1.2.10`.
 30. ✅ Match the PiP hangup control to the current Jitsi toolbar SVG at runtime and refresh the local cache key; build `1.2.11`.
+31. ✅ Replace runtime hangup-icon cloning with the plugin's own filled SVG and refresh the local cache key; build `1.2.12`.
 
 ## Completion criteria
 

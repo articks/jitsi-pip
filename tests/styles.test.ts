@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DOCUMENT_PIP_STYLES } from '../src/styles';
+import { DOCUMENT_PIP_STYLES, ICONS } from '../src/styles';
 
 describe('Document PiP layout styles', () => {
     it('splits the content equally and fills the lower half with two or four cards', () => {
@@ -21,8 +21,10 @@ describe('Document PiP layout styles', () => {
         expect(DOCUMENT_PIP_STYLES).toContain('.jmp-participant-counts');
     });
 
-    it('supports the filled Jitsi hangup icon', () => {
+    it('provides a standalone filled hangup icon', () => {
         expect(DOCUMENT_PIP_STYLES)
             .toContain('.jmp-control svg.jmp-icon-fill { fill: currentColor; stroke: none; }');
+        expect(ICONS.hangup).toContain('jmp-icon-hangup');
+        expect(ICONS.hangup).toContain('<path d="M3.4 16.8');
     });
 });

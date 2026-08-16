@@ -24,7 +24,7 @@ import type {
     SelectedScreenShare
 } from './types';
 
-export const PLUGIN_VERSION = '1.2.11';
+export const PLUGIN_VERSION = '1.2.12';
 
 export function isAutoPiPProtocolEligible(protocol: string): boolean {
     return protocol === 'https:' || protocol === 'file:';
@@ -671,7 +671,7 @@ export class JitsiMeetPiPPlugin {
                 document,
                 'hangup',
                 this.config.hangupLabel,
-                this.resolveHangupIcon(),
+                ICONS.hangup,
                 () => this.hangup(),
                 true
             )
@@ -693,25 +693,6 @@ export class JitsiMeetPiPPlugin {
             video: screenShareVideo
         };
         this.updateParticipantCountSummary();
-    }
-
-    private resolveHangupIcon(): string {
-        const source = this.host.document.querySelector<SVGSVGElement>(
-            '.hangup-button svg, .hangup-menu-button:not(.toggled) svg'
-        );
-
-        if (!source) {
-            return ICONS.hangup;
-        }
-
-        const clone = source.cloneNode(true) as SVGSVGElement;
-
-        clone.classList.add('jmp-icon-fill');
-        clone.setAttribute('aria-hidden', 'true');
-        clone.removeAttribute('height');
-        clone.removeAttribute('width');
-
-        return clone.outerHTML;
     }
 
     private createControl(

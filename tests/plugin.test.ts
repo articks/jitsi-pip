@@ -296,11 +296,6 @@ describe('JitsiMeetPiPPlugin', () => {
         const store = createStore(conferenceState([ { id: 'a', name: 'Alice' } ]));
         let audioMuted = true;
         let videoMuted = false;
-        const hostHangupButton = document.createElement('button');
-
-        hostHangupButton.className = 'hangup-button';
-        hostHangupButton.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><path data-jitsi-hangup-icon="true" d="M2 12h20"/></svg>';
-        document.body.append(hostHangupButton);
 
         host.documentPictureInPicture = {
             requestWindow: vi.fn().mockResolvedValue(pipWindow),
@@ -342,10 +337,8 @@ describe('JitsiMeetPiPPlugin', () => {
         expect(controls[1].getAttribute('aria-label')).toBe('Turn camera off');
         expect(controls[2].getAttribute('aria-label')).toBe('Return');
         expect(controls[3].getAttribute('aria-label')).toBe('Leave');
-        expect(controls[3].querySelector('[data-jitsi-hangup-icon="true"]')).not.toBeNull();
+        expect(controls[3].querySelector('.jmp-icon-hangup')).not.toBeNull();
         expect(controls[3].querySelector('svg')?.classList.contains('jmp-icon-fill')).toBe(true);
-        expect(controls[3].querySelector('svg')?.hasAttribute('width')).toBe(false);
-        expect(controls[3].querySelector('svg')?.hasAttribute('height')).toBe(false);
 
         audioMuted = false;
         videoMuted = true;

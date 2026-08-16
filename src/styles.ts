@@ -55,7 +55,7 @@ body { background: #111827; }
 export const ICONS = {
     camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 10l4.5-2.5v9L15 14z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>',
     cameraMuted: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 10l4.5-2.5v9L15 14z"/><rect x="3" y="6" width="12" height="12" rx="2"/><path class="jmp-icon-slash" d="M3 3l18 18"/></svg>',
-    hangup: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15c4.2-3.2 9.8-3.2 14 0"/><path d="M5 15l-2 3M19 15l2 3"/></svg>',
+    hangup: '<svg class="jmp-icon-fill jmp-icon-hangup" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 16.8c-.7 0-1.2-.5-1.3-1.2l-.4-2.7c-.1-.8.3-1.5 1-1.9 5.7-3.3 13.5-3.3 19.2 0 .7.4 1.1 1.1 1 1.9l-.4 2.7c-.1.7-.7 1.2-1.4 1.2h-3.2c-.7 0-1.3-.5-1.4-1.2l-.3-2.1c-2.5-.8-5.3-.8-7.8 0l-.3 2.1c-.1.7-.7 1.2-1.4 1.2H3.4z"/></svg>',
     microphone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
     microphoneMuted: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 10.8 5.9M12 18v3M9 21h6"/><path class="jmp-icon-slash" d="M3 3l18 18"/></svg>',
     participantPlaceholder: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg>',

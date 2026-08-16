@@ -12,8 +12,8 @@ Date: August 16, 2026.
 - Contract test against the exact upstream `stable/jitsi-meet_11146` archive — passed.
 - esbuild production build — passed and produced both distribution variants.
 - Standalone checks — passed for both files; neither contains runtime `import`, `export`, or `require` statements.
-- `dist/jitsi-meet-pip.js` — 64,359 bytes; SHA-256 `753d14c79c5172191c35c0db9b3e08a1da18c96cff22f6ac401171a948dc4ace`.
-- `dist/jitsi-meet-pip.min.js` — 42,465 bytes; SHA-256 `166af602fe5fa376ba04c4c04bc33617a2391427112278dd450605bf7a219e69`.
+- `dist/jitsi-meet-pip.js` — 64,079 bytes; SHA-256 `20b7589298f81aee8c3913577a1247a8fbd6366e64834be3206cad9d81a67e14`.
+- `dist/jitsi-meet-pip.min.js` — 42,339 bytes; SHA-256 `6088e4c9af1821388b0bcdfef66f5add5064db7df1041bbbb2c73f1fc693b419`.
 - Both bundles expose the same standalone API and contain the complete MIT copyright and permission notice.
 - `npm audit` — 0 known vulnerabilities at the previous dependency audit.
 
@@ -55,7 +55,7 @@ Verified behavior:
 - the local participant remains the first card, and one or three real cards are completed to two or four positions with an accessible placeholder;
 - the upper screen-share slot and lower participant section remain equal in height at the initial `320×640` size;
 - microphone and camera icons follow enabled and muted states;
-- the red hangup control clones the current filled SVG from the Jitsi toolbar and removes fixed icon dimensions;
+- the red hangup control uses the plugin's own filled SVG and has no dependency on Jitsi toolbar DOM;
 - conference and lobby counts update through Redux without reopening PiP;
 - all UI labels can be configured through `config.browserPip`, while the default title remains `PiP`;
 - the complete MIT text is embedded in both standalone bundles.

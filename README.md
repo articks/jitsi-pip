@@ -13,7 +13,7 @@ The plugin is developed and tested against Jitsi Meet `2.0.11146` (`stable/jitsi
 For production, copy `dist/jitsi-meet-pip.min.js` to a directory served by Jitsi, such as `/usr/share/jitsi-meet/libs/`, and add this to `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.11"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.12"></script>
 ```
 
 The stock Jitsi Meet 2.0.11146 `plugin.head.html` is included after `app.bundle.min.js`. The plugin first adds its button to the global `config.customToolbarButtons` array and synchronizes it with the Redux configuration after `APP.store` becomes available. This keeps the button registered even when Jitsi asynchronously reloads `config.js`.
@@ -89,7 +89,7 @@ An empty or whitespace-only label falls back to its built-in value. Auto PiP dia
 - Shared video is not added as a participant card.
 - If a participant has no active camera track, the plugin shows an avatar or initials.
 - Audio remains in the main Jitsi document to avoid duplicate playback and echo.
-- Controls are available for microphone, camera, returning to the conference, and hanging up. Enabled microphone and camera states use regular icons; disabled states use crossed-out icons and updated accessible action labels. The hangup button clones the current filled SVG from the Jitsi toolbar, with a standalone fallback when that toolbar icon is unavailable.
+- Controls are available for microphone, camera, returning to the conference, and hanging up. Enabled microphone and camera states use regular icons; disabled states use crossed-out icons and updated accessible action labels. Like the other PiP controls, the hangup button uses its own embedded SVG and does not depend on Jitsi toolbar DOM.
 - A compact `Participants: N · In lobby: M` row appears below the controls. The labels come from `participantsLabel` and `lobbyLabel`, and the values update through the Redux subscription without reopening PiP. Screen-share and other virtual participants are excluded.
 - An automatically opened PiP window closes when the Jitsi tab becomes visible again. A manually opened window remains open.
 - If the user manually closes an automatically opened window, Auto PiP remains suppressed until the page is reloaded or the user joins a new conference. Manual PiP remains available.
