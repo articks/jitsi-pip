@@ -1,5 +1,5 @@
 /*!
- * Jitsi Meet Browser PiP v1.2.12
+ * Jitsi Meet Browser PiP v1.2.13
  * https://github.com/articks/jitsi-pip
  *
  * MIT License
@@ -285,7 +285,7 @@
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { background: #111827; }
-.jmp-root { display: grid; grid-template-rows: 1fr auto auto; width: 100%; height: 100%; min-width: 260px; }
+.jmp-root { display: grid; grid-template-rows: 1fr auto auto; width: 100%; height: 100%; min-width: 220px; }
 .jmp-content { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; background: #030712; }
 .jmp-content.has-screen-share { grid-template-rows: repeat(2, minmax(0, 1fr)); }
 .jmp-screen-share { position: relative; min-width: 0; min-height: 0; margin: 4px 4px 0; overflow: hidden; border: 1px solid #374151; border-radius: 8px; background: #090d16; }
@@ -340,7 +340,7 @@ body { background: #111827; }
   };
 
   // src/plugin.ts
-  var PLUGIN_VERSION = "1.2.12";
+  var PLUGIN_VERSION = "1.2.13";
   function isAutoPiPProtocolEligible(protocol) {
     return protocol === "https:" || protocol === "file:";
   }
@@ -678,9 +678,9 @@ body { background: #111827; }
       let request;
       try {
         request = controller.requestWindow({
-          height: 640,
+          height: 480,
           preferInitialWindowPlacement: true,
-          width: 320
+          width: 240
         });
       } catch (error) {
         this.pending = false;

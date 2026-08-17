@@ -12,8 +12,8 @@ Date: August 16, 2026.
 - Contract test against the exact upstream `stable/jitsi-meet_11146` archive — passed.
 - esbuild production build — passed and produced both distribution variants.
 - Standalone checks — passed for both files; neither contains runtime `import`, `export`, or `require` statements.
-- `dist/jitsi-meet-pip.js` — 64,079 bytes; SHA-256 `20b7589298f81aee8c3913577a1247a8fbd6366e64834be3206cad9d81a67e14`.
-- `dist/jitsi-meet-pip.min.js` — 42,339 bytes; SHA-256 `6088e4c9af1821388b0bcdfef66f5add5064db7df1041bbbb2c73f1fc693b419`.
+- `dist/jitsi-meet-pip.js` — 64,079 bytes; SHA-256 `71749ada783bebb9d2eb25f6c2ca1e4967c951ce1671f7bd853a2cc096e6aff4`.
+- `dist/jitsi-meet-pip.min.js` — 42,339 bytes; SHA-256 `2f783a857e1938149068fd9dd4990ec1383895f7a5bc9c67986498c28e8e0f00`.
 - Both bundles expose the same standalone API and contain the complete MIT copyright and permission notice.
 - `npm audit` — 0 known vulnerabilities at the previous dependency audit.
 
@@ -53,7 +53,7 @@ Verified behavior:
 - manually closing automatic PiP suppresses further automatic openings for the current conference instance without disabling manual PiP;
 - the large tile selects and detaches remote and local desktop tracks without leaks;
 - the local participant remains the first card, and one or three real cards are completed to two or four positions with an accessible placeholder;
-- the upper screen-share slot and lower participant section remain equal in height at the initial `320×640` size;
+- the upper screen-share slot and lower participant section remain equal in height at the initial `240×480` size;
 - microphone and camera icons follow enabled and muted states;
 - the red hangup control uses the plugin's own filled SVG and has no dependency on Jitsi toolbar DOM;
 - conference and lobby counts update through Redux without reopening PiP;

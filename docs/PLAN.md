@@ -39,6 +39,7 @@ Create a standalone plugin for Jitsi Meet 2.0.11146 that is installed as JavaScr
 29. ✅ Add a complete English documentation set as the repository default, retain Russian `.ru.md` translations, and publish the readable `dist/jitsi-meet-pip.js` bundle alongside the minified build; release `1.2.10`.
 30. ✅ Match the PiP hangup control to the current Jitsi toolbar SVG at runtime and refresh the local cache key; build `1.2.11`.
 31. ✅ Replace runtime hangup-icon cloning with the plugin's own filled SVG and refresh the local cache key; build `1.2.12`.
+32. ✅ Reduce the default Document PiP size to `240×480`, lower the root minimum width to `220px`, and refresh the local cache key; build `1.2.13`.
 
 ## Completion criteria
 

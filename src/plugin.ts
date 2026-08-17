@@ -24,7 +24,7 @@ import type {
     SelectedScreenShare
 } from './types';
 
-export const PLUGIN_VERSION = '1.2.12';
+export const PLUGIN_VERSION = '1.2.13';
 
 export function isAutoPiPProtocolEligible(protocol: string): boolean {
     return protocol === 'https:' || protocol === 'file:';
@@ -528,9 +528,9 @@ export class JitsiMeetPiPPlugin {
         try {
             // Do not insert an await before this call: it must keep the toolbar click activation.
             request = controller.requestWindow({
-                height: 640,
+                height: 480,
                 preferInitialWindowPlacement: true,
-                width: 320
+                width: 240
             });
         } catch (error) {
             this.pending = false;

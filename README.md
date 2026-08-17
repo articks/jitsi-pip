@@ -13,7 +13,7 @@ The plugin is developed and tested against Jitsi Meet `2.0.11146` (`stable/jitsi
 For production, copy `dist/jitsi-meet-pip.min.js` to a directory served by Jitsi, such as `/usr/share/jitsi-meet/libs/`, and add this to `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.12"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.13"></script>
 ```
 
 The stock Jitsi Meet 2.0.11146 `plugin.head.html` is included after `app.bundle.min.js`. The plugin first adds its button to the global `config.customToolbarButtons` array and synchronizes it with the Redux configuration after `APP.store` becomes available. This keeps the button registered even when Jitsi asynchronously reloads `config.js`.
@@ -82,7 +82,7 @@ An empty or whitespace-only label falls back to its built-in value. Auto PiP dia
 - The first card in the lower grid is always the local user, followed by up to three active remote participants. The local camera is mirrored; if it is disabled, the card shows the participant name and initials. The maximum is four cards.
 - The grid always contains two or four positions. With one or three real cards, the unused position is filled by an unlabeled participant icon placeholder.
 - The area above the controls is always split into two equal sections: screen sharing at the top and participant cards at the bottom. Four cards use a `2×2` grid; two cards use one row and fill the lower section vertically.
-- The initial Document PiP size is `320×640`. Chrome 130+ receives `preferInitialWindowPlacement: true`, preventing restoration of an older saved size. The user can still resize the window, and the browser may constrain it to available screen space.
+- The initial Document PiP size is `240×480`. Chrome 130+ receives `preferInitialWindowPlacement: true`, preventing restoration of an older saved size. The user can still resize the window, and the browser may constrain it to available screen space.
 - An active screen share is displayed in a large tile above the participant grid. Remote and local screen shares are supported; a separate desktop track does not replace the local camera card.
 - When multiple screen shares exist, the plugin prefers the source on Jitsi's large stage, followed by the most recent remote or local share.
 - The screen-share slot is always present. Without a share, it displays an unlabeled screen icon, so starting and stopping a share does not change the outer layout.

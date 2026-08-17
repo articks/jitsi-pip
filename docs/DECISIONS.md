@@ -21,7 +21,7 @@
 - Four cards form a `2×2` grid. Two cards use one row and fill the lower section vertically.
 - Without an active desktop track, the screen-share slot displays only a screen icon. Starting or stopping a share changes only the slot contents, not the window layout.
 - Empty participant positions display only a participant icon. Empty-state text remains available through `aria-label`.
-- Document PiP requests an initial portrait size of `320×640` with `preferInitialWindowPlacement: true`, preventing Chrome 130+ from restoring an old user-selected size.
+- Document PiP requests an initial portrait size of `240×480` with `preferInitialWindowPlacement: true`, preventing Chrome 130+ from restoring an old user-selected size. The root minimum width is `220px`, so the requested width does not crop the controls.
 - Each lower card, including the local card, uses an unmuted camera video track. Shared video is not used.
 - An active desktop or screen track is displayed in the large upper tile. Remote and local tracks are supported; selection follows the Jitsi large stage and `remoteScreenShares` ordering.
 - A local share reuses the existing Jitsi desktop track and never starts another `getDisplayMedia` capture or connection.

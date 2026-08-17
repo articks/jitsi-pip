@@ -43,6 +43,6 @@ Standalone-window labels do not follow the current Jitsi language. Configure the
 - Sharing the Jitsi tab itself can produce an expected recursive mirror effect.
 - The top and bottom sections each occupy half of the content height above the controls. Four cards use a `2×2` grid; two cards use one row filling the lower section.
 - The lobby count is limited to the `knockingParticipants` data Jitsi exposes to the current user; moderators normally receive the complete list.
-- `preferInitialWindowPlacement` can force the initial `320×640` size only in Chrome 130+. Older Chromium versions may restore a user-selected size.
+- `preferInitialWindowPlacement` can force the initial `240×480` size only in Chrome 130+. Older Chromium versions may restore a user-selected size.
 - Chromium controls the native Auto PiP request. The plugin cannot force it from `visibilitychange`.
 - Chrome Auto PiP requires an active `getUserMedia` capture, a registered Media Session handler, and Automatic Picture-in-Picture site permission. Manual opening does not depend on capture.

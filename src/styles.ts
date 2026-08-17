@@ -8,7 +8,7 @@ export const DOCUMENT_PIP_STYLES = `
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { background: #111827; }
-.jmp-root { display: grid; grid-template-rows: 1fr auto auto; width: 100%; height: 100%; min-width: 260px; }
+.jmp-root { display: grid; grid-template-rows: 1fr auto auto; width: 100%; height: 100%; min-width: 220px; }
 .jmp-content { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; background: #030712; }
 .jmp-content.has-screen-share { grid-template-rows: repeat(2, minmax(0, 1fr)); }
 .jmp-screen-share { position: relative; min-width: 0; min-height: 0; margin: 4px 4px 0; overflow: hidden; border: 1px solid #374151; border-radius: 8px; background: #090d16; }

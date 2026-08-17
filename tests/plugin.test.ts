@@ -122,9 +122,9 @@ describe('JitsiMeetPiPPlugin', () => {
         api.notifyToolbarButtonClicked?.('browser-pip', false);
         expect(requestWindow).toHaveBeenCalledOnce();
         expect(requestWindow).toHaveBeenCalledWith({
-            height: 640,
+            height: 480,
             preferInitialWindowPlacement: true,
-            width: 320
+            width: 240
         });
         await Promise.resolve();
 
