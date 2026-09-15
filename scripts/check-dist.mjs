@@ -3,6 +3,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const packageMetadata = JSON.parse(await readFile(resolve(projectRoot, 'package.json'), 'utf8'));
+const pluginSource = await readFile(resolve(projectRoot, 'src/plugin.ts'), 'utf8');
 const failures = [];
 const bundles = [
     { filename: 'jitsi-meet-pip.js', maximumSize: 200_000 },
@@ -20,6 +22,10 @@ for (const { filename, maximumSize } of bundles) {
     if (!bundle.includes('JitsiBrowserPiP')) {
         failures.push(`${filename}: public global API marker is missing`);
     }
+    if (!bundle.includes(`Jitsi Meet Browser PiP v${packageMetadata.version}`)
+            || !bundle.includes(packageMetadata.version)) {
+        failures.push(`${filename}: package version ${packageMetadata.version} is missing`);
+    }
     if (!bundle.includes('Copyright (c) 2026 Dmitry Karasev <articks@gmail.com>')
             || !bundle.includes('Permission is hereby granted, free of charge')) {
         failures.push(`${filename}: MIT copyright and permission notice is missing`);
@@ -33,6 +39,10 @@ for (const { filename, maximumSize } of bundles) {
     if (metadata.size > maximumSize) {
         failures.push(`${filename}: bundle is unexpectedly large: ${metadata.size} bytes`);
     }
+}
+
+if (!pluginSource.includes(`PLUGIN_VERSION = '${packageMetadata.version}'`)) {
+    failures.push(`src/plugin.ts: PLUGIN_VERSION does not match package version ${packageMetadata.version}`);
 }
 
 if (sizes.get('jitsi-meet-pip.js') <= sizes.get('jitsi-meet-pip.min.js')) {

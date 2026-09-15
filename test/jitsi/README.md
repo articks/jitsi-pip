@@ -39,7 +39,7 @@ The stack uses relative BOSH and disables XMPP WebSocket. `http://127.0.0.1:1800
 5. If no prompt appears, return to Jitsi. The plugin displays a diagnostic for the missing condition.
 6. Permission can be enabled manually through the site controls next to the address bar: Automatic Picture-in-Picture → Allow.
 
-After updating the plugin, fully reload the room. The test page loads `jitsi-meet-pip.min.js?v=1.2.13`, because Jitsi Nginx caches files under `/libs/` for one year.
+After updating the plugin, fully reload the room. The test page loads `jitsi-meet-pip.min.js?v=1.2.14`, because Jitsi Nginx caches files under `/libs/` for one year.
 
 Inspect readiness in the page console:
 
@@ -48,21 +48,22 @@ JitsiBrowserPiP.version
 JitsiBrowserPiP.getState().autoPiP
 ```
 
-Before switching tabs, expect `version === "1.2.13"`, `protocolEligible === true`, `secureContext === true`, `handlerRegistered === true`, `captureActive === true`, and `ready === true`.
+Before switching tabs, expect `version === "1.2.14"`, `protocolEligible === true`, `secureContext === true`, `handlerRegistered === true`, `captureActive === true`, and `ready === true`.
 
-## PiP 1.2.13 window verification
+## PiP 1.2.14 window verification
 
-1. Fully reload the room and confirm `JitsiBrowserPiP.version === "1.2.13"`.
-2. Open PiP and confirm your card is first. With the camera disabled, the card must show your name and initials.
+1. Fully reload the room and confirm `JitsiBrowserPiP.version === "1.2.14"`.
+2. Open PiP without screen sharing. Confirm the active remote speaker is in the large upper tile and is absent from the lower grid; if their camera is disabled, the large tile must show an avatar or initials.
 3. With one or three real cards, confirm the unused position contains only a participant icon; the final grid must contain two or four positions.
-4. Share another window, the whole screen, or a tab, locally or remotely. The share must appear in the upper half above the participant grid.
+4. Share another window, the whole screen, or a tab, locally or remotely. The share must replace the active speaker in the upper half above the participant grid.
 5. Inspect `JitsiBrowserPiP.getState().screenShare`; a local share must report `local === true`.
-6. Stop sharing. The track must detach, and the upper slot must return to the unlabeled screen icon without changing the outer layout.
-7. Confirm four cards form a `2×2` grid and two cards form one row filling the lower section vertically.
-8. Chrome 130+ should open near `240×480`; the browser may constrain the size to available screen space. Older Chromium versions may restore a user-selected size.
-9. Toggle microphone and camera from both Jitsi and PiP. Enabled states must use regular icons and muted states crossed-out icons.
-10. Verify the bottom `Participants: N · In lobby: M` row using English `config.browserPip` labels. Values must change without reopening PiP when participants join or leave and lobby users appear or are admitted.
-11. Change several label fields in `plugin.head.html`, fully reload the room, and verify the toolbar, PiP title, control tooltips, share label, and counters. The complete field list is in the root [README](../../README.md).
+6. While the share owner is speaking, confirm their camera or avatar is available in the lower grid. A share owner who is not active must not be inserted specially.
+7. Stop sharing. The desktop track must detach, the active remote speaker must return to the upper tile, and that speaker must disappear from the lower grid without changing the outer layout.
+8. Confirm four cards form a `2×2` grid and two cards form one row filling the lower section vertically.
+9. Chrome 130+ should open near `240×480`; the browser may constrain the size to available screen space. Older Chromium versions may restore a user-selected size.
+10. Toggle microphone and camera from both Jitsi and PiP. Enabled states must use regular icons and muted states crossed-out icons.
+11. Verify the bottom `Participants: N · In lobby: M` row using English `config.browserPip` labels. Values must change without reopening PiP when participants join or leave and lobby users appear or are admitted.
+12. Change several label fields in `plugin.head.html`, fully reload the room, and verify the toolbar, PiP title, control tooltips, share label, and counters. The complete field list is in the root [README](../../README.md).
 
 Sharing the Jitsi tab itself produces an expected recursive mirror effect.
 

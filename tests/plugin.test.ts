@@ -129,9 +129,14 @@ describe('JitsiMeetPiPPlugin', () => {
         await Promise.resolve();
 
         expect(originalNotify).toHaveBeenCalledWith('browser-pip', false);
-        expect(plugin.getState()).toMatchObject({ mode: 'document', open: true, participants: [ 'a', 'b' ] });
+        expect(plugin.getState()).toMatchObject({ mode: 'document', open: true, participants: [ 'b' ] });
+        expect(pipWindow.document.querySelector('.jmp-screen-share')?.classList.contains('is-speaker'))
+            .toBe(true);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
         expect(pipWindow.document.querySelectorAll('.jmp-tile')).toHaveLength(2);
-        expect(track.attach).toHaveBeenCalled();
+        expect(track.attach).toHaveBeenCalledWith(
+            pipWindow.document.querySelector('.jmp-screen-share-video')
+        );
 
         plugin.destroy();
         expect(api.notifyToolbarButtonClicked).toBe(originalNotify);
@@ -147,7 +152,7 @@ describe('JitsiMeetPiPPlugin', () => {
             getSourceName: () => 'a-desktop-1',
             getVideoType: () => 'desktop'
         } as unknown as JitsiTrack;
-        const participants = [
+        const participants: JitsiParticipant[] = [
             { id: 'a', name: 'Alice' },
             { id: 'b', name: 'Bob' },
             { id: 'c', name: 'Carol' },
@@ -228,18 +233,250 @@ describe('JitsiMeetPiPPlugin', () => {
         store.setState(conferenceState(participants));
 
         expect(screenRoot?.hidden).toBe(false);
-        expect(screenRoot?.classList.contains('is-empty')).toBe(true);
-        expect(screenRoot?.getAttribute('aria-label')).toBe('No active sharing');
+        expect(screenRoot?.classList.contains('is-speaker')).toBe(true);
+        expect(screenRoot?.classList.contains('is-empty')).toBe(false);
+        expect(screenRoot?.getAttribute('aria-label')).toBe('Alice');
         expect(pipWindow.document.querySelector<HTMLVideoElement>('.jmp-screen-share-video')?.hidden).toBe(true);
-        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('');
-        expect(pipWindow.document.querySelector('.jmp-screen-share-label svg')).not.toBeNull();
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
+        expect(pipWindow.document.querySelector<HTMLElement>('.jmp-featured-avatar')?.hidden).toBe(false);
+        expect(pipWindow.document.querySelector('.jmp-featured-avatar')?.textContent).toBe('AL');
         expect(pipWindow.document.querySelector('.jmp-content')?.classList.contains('has-screen-share')).toBe(true);
+        expect(plugin.getState().participants).toEqual([ 'b', 'c', 'd' ]);
+        expect(pipWindow.document.querySelector('.jmp-grid')?.textContent).not.toContain('Alice');
         expect(plugin.getState().participantCounts).toEqual({ conference: 4, lobby: 0 });
         expect(pipWindow.document.querySelector('.jmp-participant-counts')?.textContent)
             .toBe('Всего: 4 · Ожидают: 0');
         expect(screenTrack.detach).toHaveBeenCalled();
         expect(plugin.getState().screenShare).toBeUndefined();
         plugin.destroy();
+    });
+
+    it('moves the dominant speaker between the featured tile and lower grid when sharing changes', async () => {
+        const host = window as unknown as JitsiHostWindow;
+        const pipWindow = createPiPWindow();
+        const cameraTrack = {
+            attach: vi.fn(),
+            detach: vi.fn(),
+            getVideoType: () => 'camera'
+        } as unknown as JitsiTrack;
+        const screenTrack = {
+            attach: vi.fn(),
+            detach: vi.fn(),
+            getSourceName: () => 'a-desktop-1',
+            getVideoType: () => 'desktop'
+        } as unknown as JitsiTrack;
+        const participants: JitsiParticipant[] = [
+            { id: 'a', name: 'Alice' },
+            { id: 'b', name: 'Bob' },
+            { id: 'c', name: 'Carol' },
+            { id: 'd', name: 'Dave' }
+        ];
+        const participantState = {
+            activeSpeakers: new Set([ 'b', 'c', 'd' ]),
+            dominantSpeaker: 'a',
+            local: { id: 'local', local: true, name: 'Me' },
+            remote: new Map(participants.map(item => [ item.id, item ] as const))
+        };
+        const stateWithoutScreen: JitsiReduxState = {
+            'features/base/participants': participantState,
+            'features/base/tracks': [ {
+                jitsiTrack: cameraTrack,
+                mediaType: 'video',
+                participantId: 'a',
+                videoType: 'camera'
+            } ]
+        };
+        const stateWithScreen: JitsiReduxState = {
+            'features/base/participants': {
+                ...participantState,
+                remote: new Map([
+                    ...participants.map(item => [ item.id, item ] as const),
+                    [ 'a-desktop-1', {
+                        fakeParticipant: 'RemoteScreenShare',
+                        id: 'a-desktop-1',
+                        name: 'Alice'
+                    } ]
+                ])
+            },
+            'features/base/tracks': [
+                ...(stateWithoutScreen['features/base/tracks'] ?? []),
+                {
+                    jitsiTrack: screenTrack,
+                    mediaType: 'video',
+                    participantId: 'a',
+                    videoType: 'desktop'
+                }
+            ],
+            'features/large-video': { participantId: 'a-desktop-1' },
+            'features/video-layout': { remoteScreenShares: [ 'a-desktop-1' ] }
+        };
+        const stateWithoutScreenBob: JitsiReduxState = {
+            ...stateWithoutScreen,
+            'features/base/participants': {
+                ...participantState,
+                activeSpeakers: new Set([ 'c', 'd', 'a' ]),
+                dominantSpeaker: 'b'
+            }
+        };
+        const store = createStore(stateWithoutScreen);
+
+        host.documentPictureInPicture = {
+            requestWindow: vi.fn().mockResolvedValue(pipWindow),
+            window: null
+        } as unknown as DocumentPictureInPictureController;
+        host.APP = {
+            API: { notifyToolbarButtonClicked: vi.fn() },
+            conference: {},
+            store
+        };
+
+        const plugin = new JitsiMeetPiPPlugin(host, {
+            ...DEFAULT_CONFIG,
+            screenShareLabel: 'Sharing'
+        });
+
+        plugin.start();
+        await plugin.open();
+
+        const featuredVideo = pipWindow.document.querySelector<HTMLVideoElement>('.jmp-screen-share-video');
+
+        expect(pipWindow.document.querySelector('.jmp-screen-share')?.classList.contains('is-speaker'))
+            .toBe(true);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
+        expect(plugin.getState().participants).toEqual([ 'local', 'b', 'c', 'd' ]);
+        expect(pipWindow.document.querySelector('.jmp-grid')?.textContent).not.toContain('Alice');
+        expect(cameraTrack.attach).toHaveBeenCalledWith(featuredVideo);
+
+        const initialCameraAttachCount = vi.mocked(cameraTrack.attach).mock.calls.length;
+
+        store.setState(stateWithoutScreen);
+        expect(cameraTrack.attach).toHaveBeenCalledTimes(initialCameraAttachCount);
+
+        store.setState(stateWithoutScreenBob);
+
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Bob');
+        expect(plugin.getState().participants).toEqual([ 'local', 'c', 'd', 'a' ]);
+        expect(pipWindow.document.querySelector('.jmp-grid')?.textContent).not.toContain('Bob');
+
+        store.setState(stateWithoutScreen);
+
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
+        expect(plugin.getState().participants).toEqual([ 'local', 'b', 'c', 'd' ]);
+        expect(pipWindow.document.querySelector('.jmp-grid')?.textContent).not.toContain('Alice');
+
+        store.setState(stateWithScreen);
+
+        const aliceSmallTile = Array.from(
+            pipWindow.document.querySelectorAll<HTMLElement>('.jmp-grid .jmp-tile')
+        ).find(tile => tile.textContent?.includes('Alice'));
+        const aliceSmallVideo = aliceSmallTile?.querySelector<HTMLVideoElement>('.jmp-video');
+
+        expect(pipWindow.document.querySelector('.jmp-screen-share')?.classList.contains('is-screen-share'))
+            .toBe(true);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent)
+            .toBe('Sharing — Alice');
+        expect(plugin.getState().participants).toEqual([ 'local', 'a', 'b', 'c' ]);
+        expect(aliceSmallVideo).not.toBeNull();
+        expect(cameraTrack.detach).toHaveBeenCalledWith(featuredVideo);
+        expect(cameraTrack.attach).toHaveBeenCalledWith(aliceSmallVideo);
+        expect(screenTrack.attach).toHaveBeenCalledWith(featuredVideo);
+
+        store.setState({
+            ...stateWithScreen,
+            'features/base/participants': {
+                ...stateWithScreen['features/base/participants'],
+                activeSpeakers: new Set([ 'c', 'd' ]),
+                dominantSpeaker: 'b'
+            }
+        });
+
+        expect(plugin.getState().participants).toEqual([ 'local', 'b', 'c', 'd' ]);
+        expect(pipWindow.document.querySelector('.jmp-grid')?.textContent).not.toContain('Alice');
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent)
+            .toBe('Sharing — Alice');
+
+        store.setState(stateWithoutScreen);
+
+        expect(pipWindow.document.querySelector('.jmp-screen-share')?.classList.contains('is-speaker'))
+            .toBe(true);
+        expect(plugin.getState().participants).toEqual([ 'local', 'b', 'c', 'd' ]);
+        expect(cameraTrack.detach).toHaveBeenCalledWith(aliceSmallVideo);
+        expect(screenTrack.detach).toHaveBeenCalledWith(featuredVideo);
+        plugin.destroy();
+    });
+
+    it('keeps the local camera card below a local screen share', async () => {
+        const host = window as unknown as JitsiHostWindow;
+        const pipWindow = createPiPWindow();
+        const localCameraTrack = {
+            attach: vi.fn(),
+            detach: vi.fn(),
+            getVideoType: () => 'camera'
+        } as unknown as JitsiTrack;
+        const localScreenTrack = {
+            attach: vi.fn(),
+            detach: vi.fn(),
+            getSourceName: () => 'local-desktop-1',
+            getVideoType: () => 'desktop'
+        } as unknown as JitsiTrack;
+        const store = createStore({
+            'features/base/participants': {
+                dominantSpeaker: 'a',
+                local: { id: 'local', local: true, name: 'Me' },
+                localScreenShare: {
+                    fakeParticipant: 'LocalScreenShare',
+                    id: 'local-desktop-1',
+                    name: 'Me'
+                },
+                remote: new Map([ [ 'a', { id: 'a', name: 'Alice' } ] ])
+            },
+            'features/base/tracks': [
+                {
+                    jitsiTrack: localCameraTrack,
+                    local: true,
+                    mediaType: 'video',
+                    participantId: 'local',
+                    videoType: 'camera'
+                },
+                {
+                    jitsiTrack: localScreenTrack,
+                    local: true,
+                    mediaType: 'video',
+                    participantId: 'local',
+                    videoType: 'desktop'
+                }
+            ]
+        });
+
+        host.documentPictureInPicture = {
+            requestWindow: vi.fn().mockResolvedValue(pipWindow),
+            window: null
+        } as unknown as DocumentPictureInPictureController;
+        host.APP = {
+            API: { notifyToolbarButtonClicked: vi.fn() },
+            conference: {},
+            store
+        };
+
+        const plugin = new JitsiMeetPiPPlugin(host, DEFAULT_CONFIG);
+
+        plugin.start();
+        await plugin.open();
+
+        const featuredVideo = pipWindow.document.querySelector<HTMLVideoElement>('.jmp-screen-share-video');
+        const localTile = pipWindow.document.querySelector<HTMLElement>('.jmp-grid .jmp-tile.is-local');
+        const localVideo = localTile?.querySelector<HTMLVideoElement>('.jmp-video');
+
+        expect(plugin.getState().screenShare).toMatchObject({ local: true });
+        expect(plugin.getState().participants).toEqual([ 'local', 'a' ]);
+        expect(localScreenTrack.attach).toHaveBeenCalledWith(featuredVideo);
+        expect(localCameraTrack.attach).toHaveBeenCalledWith(localVideo);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent)
+            .toBe(`${DEFAULT_CONFIG.screenShareLabel} — ${DEFAULT_CONFIG.youLabel}`);
+
+        plugin.destroy();
+        expect(localScreenTrack.detach).toHaveBeenCalledWith(featuredVideo);
+        expect(localCameraTrack.detach).toHaveBeenCalledWith(localVideo);
     });
 
     it('restores its toolbar button after Jitsi replaces the asynchronously loaded config', () => {
@@ -382,15 +619,17 @@ describe('JitsiMeetPiPPlugin', () => {
         plugin.start();
         await plugin.open();
         expect(pipWindow.document.querySelectorAll('.jmp-tile')).toHaveLength(2);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
+        expect(plugin.getState().participants).toEqual([ 'b' ]);
 
         store.setState(conferenceState([ { id: 'b', name: 'Bob' } ]));
 
         const tiles = pipWindow.document.querySelectorAll('.jmp-tile');
 
         expect(tiles).toHaveLength(2);
-        expect(tiles[0].textContent).toContain('Bob');
-        expect(tiles[1].classList.contains('jmp-placeholder')).toBe(true);
-        expect(plugin.getState().participants).toEqual([ 'b' ]);
+        expect(Array.from(tiles).every(tile => tile.classList.contains('jmp-placeholder'))).toBe(true);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Bob');
+        expect(plugin.getState().participants).toEqual([]);
         expect(track.detach).toHaveBeenCalled();
 
         const attachCount = vi.mocked(track.attach).mock.calls.length;
@@ -403,7 +642,12 @@ describe('JitsiMeetPiPPlugin', () => {
     it('pads one or three participant cards to an even two-by-two layout', async () => {
         const host = window as unknown as JitsiHostWindow;
         const pipWindow = createPiPWindow();
-        const store = createStore(conferenceState([ { id: 'a', name: 'Alice' } ]));
+        const store = createStore({
+            'features/base/participants': {
+                local: { id: 'local', local: true, name: 'Me' },
+                remote: new Map()
+            }
+        });
 
         host.documentPictureInPicture = {
             requestWindow: vi.fn().mockResolvedValue(pipWindow),
@@ -429,6 +673,8 @@ describe('JitsiMeetPiPPlugin', () => {
         expect(pipWindow.document.querySelector('.jmp-screen-share')?.classList.contains('is-empty')).toBe(true);
         expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('');
         expect(pipWindow.document.querySelector('.jmp-screen-share-label svg')).not.toBeNull();
+        expect(pipWindow.document.querySelector('.jmp-screen-share')?.getAttribute('aria-label'))
+            .toBe(DEFAULT_CONFIG.noActiveSpeakerLabel);
         expect(grid?.querySelectorAll('.jmp-tile')).toHaveLength(2);
         expect(grid?.querySelectorAll('.jmp-placeholder')).toHaveLength(1);
         expect(grid?.querySelector('.jmp-placeholder')?.textContent).toBe('');
@@ -436,16 +682,24 @@ describe('JitsiMeetPiPPlugin', () => {
             .toBe('Waiting for participant');
         expect(grid?.querySelector('.jmp-placeholder svg')).not.toBeNull();
 
-        store.setState(conferenceState([
-            { id: 'a', name: 'Alice' },
-            { id: 'b', name: 'Bob' },
-            { id: 'c', name: 'Carol' }
-        ]));
+        store.setState({
+            'features/base/participants': {
+                activeSpeakers: new Set([ 'b', 'c' ]),
+                dominantSpeaker: 'a',
+                local: { id: 'local', local: true, name: 'Me' },
+                remote: new Map([
+                    [ 'a', { id: 'a', name: 'Alice' } ],
+                    [ 'b', { id: 'b', name: 'Bob' } ],
+                    [ 'c', { id: 'c', name: 'Carol' } ]
+                ])
+            }
+        });
 
         expect(grid?.dataset.count).toBe('4');
         expect(grid?.querySelectorAll('.jmp-tile')).toHaveLength(4);
         expect(grid?.querySelectorAll('.jmp-placeholder')).toHaveLength(1);
-        expect(plugin.getState().participants).toEqual([ 'a', 'b', 'c' ]);
+        expect(plugin.getState().participants).toEqual([ 'local', 'b', 'c' ]);
+        expect(pipWindow.document.querySelector('.jmp-screen-share-label')?.textContent).toBe('Alice');
         plugin.destroy();
     });
 
@@ -792,6 +1046,11 @@ describe('JitsiMeetPiPPlugin', () => {
     it('uses Video PiP fallback when Document PiP is unavailable', async () => {
         const host = window as unknown as JitsiHostWindow;
         const requestPictureInPicture = vi.fn().mockResolvedValue({});
+        const dominantTrack = {
+            attach: vi.fn(),
+            detach: vi.fn(),
+            getVideoType: () => 'camera'
+        } as unknown as JitsiTrack;
 
         Object.defineProperty(host.document, 'pictureInPictureEnabled', {
             configurable: true,
@@ -804,7 +1063,10 @@ describe('JitsiMeetPiPPlugin', () => {
         host.APP = {
             API: { notifyToolbarButtonClicked: vi.fn() },
             conference: {},
-            store: createStore(conferenceState([ { id: 'a', name: 'Alice' } ]))
+            store: createStore(conferenceState([
+                { id: 'a', name: 'Alice' },
+                { id: 'b', name: 'Bob' }
+            ], dominantTrack))
         };
 
         const plugin = new JitsiMeetPiPPlugin(host, DEFAULT_CONFIG);
@@ -818,6 +1080,8 @@ describe('JitsiMeetPiPPlugin', () => {
         await expect(plugin.open()).resolves.toBe(true);
         expect(requestPictureInPicture).toHaveBeenCalledOnce();
         expect(plugin.getState().mode).toBe('video');
+        expect(plugin.getState().participants).toEqual([ 'b' ]);
+        expect(dominantTrack.attach).toHaveBeenCalledWith(video);
         plugin.destroy();
     });
 

@@ -40,12 +40,13 @@ Create a standalone plugin for Jitsi Meet 2.0.11146 that is installed as JavaScr
 30. ✅ Match the PiP hangup control to the current Jitsi toolbar SVG at runtime and refresh the local cache key; build `1.2.11`.
 31. ✅ Replace runtime hangup-icon cloning with the plugin's own filled SVG and refresh the local cache key; build `1.2.12`.
 32. ✅ Reduce the default Document PiP size to `240×480`, lower the root minimum width to `220px`, and refresh the local cache key; build `1.2.13`.
+33. ✅ Reuse the permanent upper tile for the active remote speaker when no screen share exists, exclude that speaker from the lower grid without losing a slot, and restore normal lower-grid selection during sharing; build `1.2.14`.
 
 ## Completion criteria
 
 - The plugin has no runtime dependencies and does not require rebuilding Jitsi.
 - Existing Jitsi custom toolbar buttons are retained.
-- Document PiP displays a large active share, the local participant, and up to three active remote participants in a two- or four-position lower grid.
+- Document PiP displays an active share or remote speaker in the large upper tile and a de-duplicated two- or four-position participant grid below.
 - The bottom row updates conference and lobby participant counts dynamically.
 - Speaker changes do not duplicate audio or leak attached tracks.
 - Manual and automatic opening differ correctly when returning to Jitsi.

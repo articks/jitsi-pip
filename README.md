@@ -13,7 +13,7 @@ The plugin is developed and tested against Jitsi Meet `2.0.11146` (`stable/jitsi
 For production, copy `dist/jitsi-meet-pip.min.js` to a directory served by Jitsi, such as `/usr/share/jitsi-meet/libs/`, and add this to `plugin.head.html`:
 
 ```html
-<script src="/libs/jitsi-meet-pip.min.js?v=1.2.13"></script>
+<script src="/libs/jitsi-meet-pip.min.js?v=1.2.14"></script>
 ```
 
 The stock Jitsi Meet 2.0.11146 `plugin.head.html` is included after `app.bundle.min.js`. The plugin first adds its button to the global `config.customToolbarButtons` array and synchronizes it with the Redux configuration after `APP.store` becomes available. This keeps the button registered even when Jitsi asynchronously reloads `config.js`.
@@ -71,8 +71,9 @@ The standalone plugin does not read Jitsi language files. All UI labels are conf
 | `hangupLabel` | End the call |
 | `screenShareLabel`, `youLabel` | Active screen-share label, including a local share |
 | `participantLabel` | Participant fallback name |
-| `noScreenShareLabel`, `waitingParticipantLabel` | Empty-state icon `aria-label` values |
-| `noActiveSpeakerLabel` | Video PiP fallback text when no participant is available |
+| `waitingParticipantLabel` | Empty lower-grid position `aria-label` |
+| `noActiveSpeakerLabel` | Empty upper-slot `aria-label` and Video PiP fallback text |
+| `noScreenShareLabel` | Retained configuration field for backward compatibility |
 | `participantsLabel`, `lobbyLabel` | Dynamic counter labels |
 
 An empty or whitespace-only label falls back to its built-in value. Auto PiP diagnostic messages about protocol, capture, and site permission are internal plugin messages and are not configurable UI labels.
@@ -81,11 +82,13 @@ An empty or whitespace-only label falls back to its built-in value. Auto PiP dia
 
 - The first card in the lower grid is always the local user, followed by up to three active remote participants. The local camera is mirrored; if it is disabled, the card shows the participant name and initials. The maximum is four cards.
 - The grid always contains two or four positions. With one or three real cards, the unused position is filled by an unlabeled participant icon placeholder.
-- The area above the controls is always split into two equal sections: screen sharing at the top and participant cards at the bottom. Four cards use a `2×2` grid; two cards use one row and fill the lower section vertically.
+- The area above the controls is always split into two equal sections: a featured-media tile at the top and participant cards at the bottom. Four cards use a `2×2` grid; two cards use one row and fill the lower section vertically.
 - The initial Document PiP size is `240×480`. Chrome 130+ receives `preferInitialWindowPlacement: true`, preventing restoration of an older saved size. The user can still resize the window, and the browser may constrain it to available screen space.
-- An active screen share is displayed in a large tile above the participant grid. Remote and local screen shares are supported; a separate desktop track does not replace the local camera card.
+- An active screen share is displayed in the large upper tile. Remote and local screen shares are supported; a separate desktop track does not replace the local camera card.
 - When multiple screen shares exist, the plugin prefers the source on Jitsi's large stage, followed by the most recent remote or local share.
-- The screen-share slot is always present. Without a share, it displays an unlabeled screen icon, so starting and stopping a share does not change the outer layout.
+- Without an active share, the upper tile displays the dominant remote speaker, then a recent active speaker, then the first available remote participant. The featured participant is excluded from the lower grid before its four-card limit is applied, so the next participant fills the released position instead of duplicating the large tile.
+- While a share is active, the lower grid returns to its normal selection. A speaking share owner can therefore appear by camera or avatar below while their shared screen remains above; a non-active owner is not inserted specially.
+- If there is no remote participant, the upper tile displays an unlabeled participant icon. Starting and stopping a share does not change the outer layout.
 - Shared video is not added as a participant card.
 - If a participant has no active camera track, the plugin shows an avatar or initials.
 - Audio remains in the main Jitsi document to avoid duplicate playback and echo.
@@ -111,6 +114,8 @@ window.JitsiBrowserPiP.destroy();
 `getState().autoPiP` exposes automatic-mode diagnostics: local capture activity, Media Session registration, secure-context and protocol eligibility, readiness, the last Chrome event reason, the last error, and the `suppressedByUser` flag.
 
 `getState().screenShare` contains the active share identifier, label, and local flag, or is absent when no screen share is active.
+
+`getState().participants` contains only the real participant cards currently selected for the lower grid. A remote participant featured in the upper tile is omitted until a screen share replaces that tile.
 
 If the browser did not initiate Auto PiP itself, call `open()` directly from a user-action handler.
 

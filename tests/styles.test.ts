@@ -8,6 +8,7 @@ describe('Document PiP layout styles', () => {
             .toContain('.jmp-content.has-screen-share { grid-template-rows: repeat(2, minmax(0, 1fr)); }');
         expect(DOCUMENT_PIP_STYLES)
             .toContain('.jmp-grid[data-count="3"], .jmp-grid[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }');
+        expect(DOCUMENT_PIP_STYLES).toContain('.jmp-screen-share.is-speaker .jmp-screen-share-video');
         expect(DOCUMENT_PIP_STYLES).toContain('.jmp-screen-share.is-empty');
         expect(DOCUMENT_PIP_STYLES).toContain('.jmp-screen-share.is-empty .jmp-screen-share-label svg');
         expect(DOCUMENT_PIP_STYLES).toContain('.jmp-placeholder-icon svg');

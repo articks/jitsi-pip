@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
     participantInitials,
+    selectActiveParticipantWithTrack,
     selectActiveParticipants,
     selectCameraTrack,
     selectLocalCameraTrack,
@@ -130,6 +131,30 @@ describe('active participant selection', () => {
             participant: { id: 'a' },
             track: camera
         });
+        expect(selectActiveParticipantWithTrack(state)).toMatchObject({
+            participant: { id: 'a' },
+            track: camera
+        });
+    });
+
+    it('excludes a featured participant before applying the lower-grid limit', () => {
+        const state: JitsiReduxState = {
+            'features/base/participants': {
+                activeSpeakers: [ 'a', 'b', 'c', 'd' ],
+                dominantSpeaker: 'a',
+                local: participant('local', { local: true, name: 'Me' }),
+                remote: new Map([
+                    [ 'a', participant('a') ],
+                    [ 'b', participant('b') ],
+                    [ 'c', participant('c') ],
+                    [ 'd', participant('d') ]
+                ])
+            }
+        };
+
+        expect(selectParticipantsWithTracks(state, 4, [ 'a' ])
+            .map(item => item.participant.id))
+            .toEqual([ 'local', 'b', 'c', 'd' ]);
     });
 
     it('places the local participant first and keeps the grid capped at four', () => {

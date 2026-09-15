@@ -74,16 +74,21 @@ export function participantAvatar(participant: JitsiParticipant): string | undef
     return participant.loadableAvatarUrl || participant.avatarURL;
 }
 
-export function selectActiveParticipants(state: JitsiReduxState, limit: number): JitsiParticipant[] {
+export function selectActiveParticipants(
+        state: JitsiReduxState,
+        limit: number,
+        excludedParticipantIds: Iterable<string> = []
+): JitsiParticipant[] {
     const participants = state['features/base/participants'];
 
     if (!participants?.remote) {
         return [];
     }
 
+    const excluded = new Set(excludedParticipantIds);
     const ids: string[] = [];
     const add = (id?: string) => {
-        if (!id || ids.includes(id)) {
+        if (!id || excluded.has(id) || ids.includes(id)) {
             return;
         }
 
@@ -174,7 +179,8 @@ export function selectLocalCameraTrack(state: JitsiReduxState): JitsiTrack | und
 
 export function selectParticipantsWithTracks(
         state: JitsiReduxState,
-        limit: number
+        limit: number,
+        excludedParticipantIds: Iterable<string> = []
 ): SelectedParticipant[] {
     const normalizedLimit = Math.min(4, Math.max(1, limit));
     const local = state['features/base/participants']?.local;
@@ -190,13 +196,26 @@ export function selectParticipantsWithTracks(
     const remoteLimit = normalizedLimit - selected.length;
 
     if (remoteLimit > 0) {
-        selected.push(...selectActiveParticipants(state, remoteLimit).map(participant => ({
+        selected.push(...selectActiveParticipants(state, remoteLimit, excludedParticipantIds).map(participant => ({
             participant,
             track: selectCameraTrack(state, participant.id)
         })));
     }
 
     return selected.slice(0, normalizedLimit);
+}
+
+export function selectActiveParticipantWithTrack(
+        state: JitsiReduxState
+): SelectedParticipant | undefined {
+    const participant = selectActiveParticipants(state, 1)[0];
+
+    return participant
+        ? {
+            participant,
+            track: selectCameraTrack(state, participant.id)
+        }
+        : undefined;
 }
 
 function isScreenShareTrack(track: JitsiTrackState): boolean {

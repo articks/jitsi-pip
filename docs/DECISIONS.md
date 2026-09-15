@@ -17,16 +17,18 @@
 - The remote dominant speaker has first priority, followed by `activeSpeakers` or `speakersList` in Jitsi order. Remaining positions are filled with other remote participants in join order so a quiet conference does not produce an empty PiP window.
 - The configured maximum is clamped to four cards.
 - The lower grid always contains two or four positions. An odd number of real cards is completed with a non-media placeholder excluded from the public participant list.
-- Content is split into two equal-height sections: a permanent screen-share slot above and the participant grid below.
+- Content is split into two equal-height sections: a permanent featured-media slot above and the participant grid below.
 - Four cards form a `2×2` grid. Two cards use one row and fill the lower section vertically.
-- Without an active desktop track, the screen-share slot displays only a screen icon. Starting or stopping a share changes only the slot contents, not the window layout.
+- The upper slot displays an active desktop track when present. Otherwise it displays the dominant or most recently active real remote participant, falling back to the first connected remote participant. Local and virtual screen-share participants are never featured as speakers.
+- A participant featured above is excluded before the lower-grid limit is applied, allowing the next eligible participant to fill the grid. This exclusion is removed while screen sharing is featured, so a speaking share owner can appear by camera below without being inserted solely because they own the share.
+- With neither a share nor a remote participant, the upper slot displays only a participant icon. Starting or stopping a share does not change the window layout.
 - Empty participant positions display only a participant icon. Empty-state text remains available through `aria-label`.
 - Document PiP requests an initial portrait size of `240×480` with `preferInitialWindowPlacement: true`, preventing Chrome 130+ from restoring an old user-selected size. The root minimum width is `220px`, so the requested width does not crop the controls.
 - Each lower card, including the local card, uses an unmuted camera video track. Shared video is not used.
 - An active desktop or screen track is displayed in the large upper tile. Remote and local tracks are supported; selection follows the Jitsi large stage and `remoteScreenShares` ordering.
 - A local share reuses the existing Jitsi desktop track and never starts another `getDisplayMedia` capture or connection.
 - PiP videos are muted. Conference audio remains in the main document.
-- Missing camera video is replaced by an avatar or initials.
+- Missing camera video in both the featured tile and lower grid is replaced by an avatar or initials.
 - Microphone and camera icons follow the current Jitsi state. Muted states use crossed-out SVG icons and update `title` and `aria-label` with the available action.
 - The hangup control uses a standalone filled SVG defined by the plugin. It follows the visual language of Jitsi's call-ending control without reading or cloning toolbar DOM.
 - The bottom row shows the number of real conference participants, including the local user, and the length of `features/lobby.knockingParticipants`. Both values use the same Redux subscription as the tiles and are exposed through `getState().participantCounts`.

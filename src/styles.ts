@@ -14,6 +14,8 @@ body { background: #111827; }
 .jmp-screen-share { position: relative; min-width: 0; min-height: 0; margin: 4px 4px 0; overflow: hidden; border: 1px solid #374151; border-radius: 8px; background: #090d16; }
 .jmp-screen-share[hidden] { display: none; }
 .jmp-screen-share-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #090d16; }
+.jmp-screen-share.is-speaker .jmp-screen-share-video { object-fit: cover; background: #111827; }
+.jmp-featured-avatar { border-radius: 0; }
 .jmp-screen-share-label { position: absolute; left: 10px; bottom: 9px; max-width: calc(100% - 20px); overflow: hidden; padding: 4px 8px; border-radius: 5px; background: rgba(3, 7, 18, .78); font-size: 12px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .jmp-screen-share.is-empty { border-style: dashed; background: linear-gradient(145deg, #151f2e, #090d16); }
 .jmp-screen-share.is-empty .jmp-screen-share-label { inset: 0; display: grid; place-items: center; max-width: none; padding: 24px; background: transparent; color: #9ca3af; }
@@ -59,6 +61,5 @@ export const ICONS = {
     microphone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
     microphoneMuted: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 10.8 5.9M12 18v3M9 21h6"/><path class="jmp-icon-slash" d="M3 3l18 18"/></svg>',
     participantPlaceholder: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg>',
-    return: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M4 12h10a6 6 0 0 1 6 6"/></svg>',
-    screenSharePlaceholder: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'
+    return: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M4 12h10a6 6 0 0 1 6 6"/></svg>'
 } as const;

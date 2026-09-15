@@ -23,7 +23,7 @@ These are internal Jitsi interfaces. After upgrading Jitsi, run `npm run test:co
 | Capability | Chrome/Edge | Firefox with Document PiP | Safari |
 | --- | --- | --- | --- |
 | Multiple participants | Yes | When the API is available | No |
-| Large screen share plus four participants | Yes | With Document PiP | No, screen share only |
+| Featured speaker or large screen share plus four participant positions | Yes | With Document PiP | No, one video only |
 | Custom controls | Yes | When the API is available | No, system controls |
 | Manual opening | Yes | When the API is available | Yes |
 | Auto PiP | Chrome/Edge 120+, HTTPS, active capture, and site permission | Feature detection | Not guaranteed |
@@ -41,7 +41,7 @@ Standalone-window labels do not follow the current Jitsi language. Configure the
 - Browser policy or Permissions Policy can disable PiP completely.
 - If standard Video PiP has neither a camera track nor `canvas.captureStream`, the fallback is temporarily unavailable.
 - Sharing the Jitsi tab itself can produce an expected recursive mirror effect.
-- The top and bottom sections each occupy half of the content height above the controls. Four cards use a `2×2` grid; two cards use one row filling the lower section.
+- The featured-media and lower-grid sections each occupy half of the content height above the controls. Without sharing, the featured remote speaker is excluded from the lower grid; during sharing, normal lower-grid selection resumes.
 - The lobby count is limited to the `knockingParticipants` data Jitsi exposes to the current user; moderators normally receive the complete list.
 - `preferInitialWindowPlacement` can force the initial `240×480` size only in Chrome 130+. Older Chromium versions may restore a user-selected size.
 - Chromium controls the native Auto PiP request. The plugin cannot force it from `visibilitychange`.

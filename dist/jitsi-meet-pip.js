@@ -1,5 +1,5 @@
 /*!
- * Jitsi Meet Browser PiP v1.2.13
+ * Jitsi Meet Browser PiP v1.2.14
  * https://github.com/articks/jitsi-pip
  *
  * MIT License
@@ -153,14 +153,15 @@
   function participantAvatar(participant) {
     return participant.loadableAvatarUrl || participant.avatarURL;
   }
-  function selectActiveParticipants(state, limit) {
+  function selectActiveParticipants(state, limit, excludedParticipantIds = []) {
     const participants = state["features/base/participants"];
     if (!participants?.remote) {
       return [];
     }
+    const excluded = new Set(excludedParticipantIds);
     const ids = [];
     const add = (id) => {
-      if (!id || ids.includes(id)) {
+      if (!id || excluded.has(id) || ids.includes(id)) {
         return;
       }
       const participant = getRemoteParticipant(participants.remote, id);
@@ -206,7 +207,7 @@
     });
     return candidates.find((track) => (track.videoType || track.jitsiTrack?.getVideoType?.()) === "camera")?.jitsiTrack || candidates[0]?.jitsiTrack;
   }
-  function selectParticipantsWithTracks(state, limit) {
+  function selectParticipantsWithTracks(state, limit, excludedParticipantIds = []) {
     const normalizedLimit = Math.min(4, Math.max(1, limit));
     const local = state["features/base/participants"]?.local;
     const selected = [];
@@ -218,12 +219,19 @@
     }
     const remoteLimit = normalizedLimit - selected.length;
     if (remoteLimit > 0) {
-      selected.push(...selectActiveParticipants(state, remoteLimit).map((participant) => ({
+      selected.push(...selectActiveParticipants(state, remoteLimit, excludedParticipantIds).map((participant) => ({
         participant,
         track: selectCameraTrack(state, participant.id)
       })));
     }
     return selected.slice(0, normalizedLimit);
+  }
+  function selectActiveParticipantWithTrack(state) {
+    const participant = selectActiveParticipants(state, 1)[0];
+    return participant ? {
+      participant,
+      track: selectCameraTrack(state, participant.id)
+    } : void 0;
   }
   function isScreenShareTrack(track) {
     const type = track.videoType || track.jitsiTrack?.getVideoType?.();
@@ -291,6 +299,8 @@ body { background: #111827; }
 .jmp-screen-share { position: relative; min-width: 0; min-height: 0; margin: 4px 4px 0; overflow: hidden; border: 1px solid #374151; border-radius: 8px; background: #090d16; }
 .jmp-screen-share[hidden] { display: none; }
 .jmp-screen-share-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #090d16; }
+.jmp-screen-share.is-speaker .jmp-screen-share-video { object-fit: cover; background: #111827; }
+.jmp-featured-avatar { border-radius: 0; }
 .jmp-screen-share-label { position: absolute; left: 10px; bottom: 9px; max-width: calc(100% - 20px); overflow: hidden; padding: 4px 8px; border-radius: 5px; background: rgba(3, 7, 18, .78); font-size: 12px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .jmp-screen-share.is-empty { border-style: dashed; background: linear-gradient(145deg, #151f2e, #090d16); }
 .jmp-screen-share.is-empty .jmp-screen-share-label { inset: 0; display: grid; place-items: center; max-width: none; padding: 24px; background: transparent; color: #9ca3af; }
@@ -335,12 +345,11 @@ body { background: #111827; }
     microphone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
     microphoneMuted: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 10.8 5.9M12 18v3M9 21h6"/><path class="jmp-icon-slash" d="M3 3l18 18"/></svg>',
     participantPlaceholder: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6"/></svg>',
-    return: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M4 12h10a6 6 0 0 1 6 6"/></svg>',
-    screenSharePlaceholder: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'
+    return: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M4 12h10a6 6 0 0 1 6 6"/></svg>'
   };
 
   // src/plugin.ts
-  var PLUGIN_VERSION = "1.2.13";
+  var PLUGIN_VERSION = "1.2.14";
   function isAutoPiPProtocolEligible(protocol) {
     return protocol === "https:" || protocol === "file:";
   }
@@ -363,6 +372,8 @@ body { background: #111827; }
     documentGrid;
     documentParticipantCounts;
     documentWindow;
+    featuredElements;
+    featuredParticipant;
     fallbackAttachedTrack;
     fallbackCanvas;
     fallbackCanvasKey;
@@ -383,7 +394,6 @@ body { background: #111827; }
     pendingAutomatic = false;
     participantCounts = { conference: 0, lobby: 0 };
     screenShare;
-    screenShareElements;
     selected = [];
     store;
     storeUnsubscribe;
@@ -496,6 +506,7 @@ body { background: #111827; }
       this.toast?.remove();
       this.toast = void 0;
       this.participantCounts = { conference: 0, lobby: 0 };
+      this.featuredParticipant = void 0;
       this.screenShare = void 0;
       this.selected = [];
     }
@@ -696,7 +707,7 @@ body { background: #111827; }
         this.automatic = this.pendingAutomatic;
         this.documentWindow = pipWindow;
         this.setupDocumentWindow(pipWindow);
-        this.updateDocumentScreenShare();
+        this.updateDocumentFeatured();
         this.updateDocumentParticipants();
         this.updateControlState();
         pipWindow.addEventListener("pagehide", () => {
@@ -756,9 +767,11 @@ body { background: #111827; }
       document.head.appendChild(style);
       const root = document.createElement("div");
       const content = document.createElement("div");
-      const screenShareRoot = document.createElement("div");
-      const screenShareVideo = document.createElement("video");
-      const screenShareLabel = document.createElement("div");
+      const featuredRoot = document.createElement("div");
+      const featuredVideo = document.createElement("video");
+      const featuredAvatar = document.createElement("div");
+      const featuredAvatarCircle = document.createElement("div");
+      const featuredLabel = document.createElement("div");
       const grid = document.createElement("div");
       const controls = document.createElement("div");
       const participantCounts = document.createElement("div");
@@ -766,15 +779,18 @@ body { background: #111827; }
       const lobbyCount = document.createElement("strong");
       root.className = "jmp-root";
       content.className = "jmp-content has-screen-share";
-      screenShareRoot.className = "jmp-screen-share is-empty";
-      screenShareVideo.className = "jmp-screen-share-video";
-      screenShareVideo.autoplay = true;
-      screenShareVideo.hidden = true;
-      screenShareVideo.muted = true;
-      screenShareVideo.playsInline = true;
-      screenShareLabel.className = "jmp-screen-share-label";
-      screenShareLabel.innerHTML = ICONS.screenSharePlaceholder;
-      screenShareRoot.setAttribute("aria-label", this.config.noScreenShareLabel);
+      featuredRoot.className = "jmp-screen-share is-empty";
+      featuredVideo.className = "jmp-screen-share-video";
+      featuredVideo.autoplay = true;
+      featuredVideo.hidden = true;
+      featuredVideo.muted = true;
+      featuredVideo.playsInline = true;
+      featuredAvatar.className = "jmp-avatar jmp-featured-avatar";
+      featuredAvatar.hidden = true;
+      featuredAvatarCircle.className = "jmp-avatar-circle";
+      featuredLabel.className = "jmp-screen-share-label";
+      featuredLabel.innerHTML = ICONS.participantPlaceholder;
+      featuredRoot.setAttribute("aria-label", this.config.noActiveSpeakerLabel);
       grid.className = "jmp-grid";
       controls.className = "jmp-controls";
       participantCounts.className = "jmp-participant-counts";
@@ -804,8 +820,9 @@ body { background: #111827; }
           true
         )
       );
-      screenShareRoot.append(screenShareVideo, screenShareLabel);
-      content.append(screenShareRoot, grid);
+      featuredAvatar.append(featuredAvatarCircle);
+      featuredRoot.append(featuredAvatar, featuredVideo, featuredLabel);
+      content.append(featuredRoot, grid);
       root.append(content, controls, participantCounts);
       document.body.append(root);
       this.documentContent = content;
@@ -814,10 +831,13 @@ body { background: #111827; }
         conference: conferenceCount,
         lobby: lobbyCount
       };
-      this.screenShareElements = {
-        label: screenShareLabel,
-        root: screenShareRoot,
-        video: screenShareVideo
+      this.featuredElements = {
+        avatar: featuredAvatar,
+        avatarCircle: featuredAvatarCircle,
+        name: featuredLabel,
+        participantId: "",
+        root: featuredRoot,
+        video: featuredVideo
       };
       this.updateParticipantCountSummary();
     }
@@ -842,12 +862,14 @@ body { background: #111827; }
         this.syncMediaSessionCaptureState();
         this.participantCounts = selectParticipantCounts(state);
         this.screenShare = this.config.showScreenShare ? selectScreenShare(state, this.config.includeLocalScreenShare, this.config) : void 0;
+        this.featuredParticipant = this.screenShare ? void 0 : selectActiveParticipantWithTrack(state);
         this.selected = selectParticipantsWithTracks(
           state,
-          this.config.maxParticipants
+          this.config.maxParticipants,
+          this.featuredParticipant ? [this.featuredParticipant.participant.id] : []
         );
         this.updateFallbackVideo();
-        this.updateDocumentScreenShare();
+        this.updateDocumentFeatured();
         this.updateDocumentParticipants();
         this.updateParticipantCountSummary();
         this.updateControlState();
@@ -984,52 +1006,55 @@ body { background: #111827; }
       root.append(icon);
       return root;
     }
-    updateDocumentScreenShare() {
-      const elements = this.screenShareElements;
+    updateDocumentFeatured() {
+      const elements = this.featuredElements;
       const content = this.documentContent;
       if (!elements || !content) {
         return;
       }
-      const selected = this.screenShare;
-      if (!selected) {
-        this.detachScreenShareTrack(elements);
-        elements.root.hidden = false;
-        elements.root.classList.add("is-empty");
-        elements.root.setAttribute("aria-label", this.config.noScreenShareLabel);
-        elements.video.hidden = true;
-        elements.label.innerHTML = ICONS.screenSharePlaceholder;
-        elements.label.removeAttribute("title");
-        content.classList.add("has-screen-share");
+      const screenShare = this.screenShare;
+      const participant = this.featuredParticipant;
+      content.classList.add("has-screen-share");
+      elements.root.hidden = false;
+      if (screenShare) {
+        elements.participantId = screenShare.id;
+        elements.root.classList.remove("is-empty", "is-speaker");
+        elements.root.classList.add("is-screen-share");
+        elements.root.setAttribute("aria-label", screenShare.label);
+        elements.name.textContent = screenShare.label;
+        elements.name.title = screenShare.label;
+        elements.avatar.hidden = true;
+        if (elements.attachedTrack !== screenShare.track) {
+          this.detachTileTrack(elements);
+          try {
+            screenShare.track.attach(elements.video);
+            elements.attachedTrack = screenShare.track;
+            this.playVideo(elements.video);
+          } catch (error) {
+            this.log("warn", `Unable to attach screen share track ${screenShare.id}`, error);
+          }
+        }
+        elements.video.hidden = !elements.attachedTrack;
         return;
       }
-      if (elements.attachedTrack !== selected.track) {
-        this.detachScreenShareTrack(elements);
-        try {
-          selected.track.attach(elements.video);
-          elements.attachedTrack = selected.track;
-          this.playVideo(elements.video);
-        } catch (error) {
-          this.log("warn", `Unable to attach screen share track ${selected.id}`, error);
-        }
+      if (participant) {
+        const name = participantName(participant.participant, this.config.participantLabel);
+        elements.participantId = participant.participant.id;
+        elements.root.classList.remove("is-empty", "is-screen-share");
+        elements.root.classList.add("is-speaker");
+        elements.root.setAttribute("aria-label", name);
+        this.updateTile(elements, participant);
+        return;
       }
-      elements.label.textContent = selected.label;
-      elements.label.title = selected.label;
-      elements.root.setAttribute("aria-label", selected.label);
-      elements.root.hidden = false;
-      elements.root.classList.remove("is-empty");
-      elements.video.hidden = false;
-      content.classList.add("has-screen-share");
-    }
-    detachScreenShareTrack(elements) {
-      if (elements.attachedTrack) {
-        try {
-          elements.attachedTrack.detach?.(elements.video);
-        } catch (error) {
-          this.log("warn", "Unable to detach screen share track", error);
-        }
-        elements.attachedTrack = void 0;
-      }
-      elements.video.srcObject = null;
+      this.detachTileTrack(elements);
+      elements.participantId = "";
+      elements.root.classList.remove("is-screen-share", "is-speaker");
+      elements.root.classList.add("is-empty");
+      elements.root.setAttribute("aria-label", this.config.noActiveSpeakerLabel);
+      elements.video.hidden = true;
+      elements.avatar.hidden = true;
+      elements.name.innerHTML = ICONS.participantPlaceholder;
+      elements.name.removeAttribute("title");
     }
     createTile(document, participant) {
       const root = document.createElement("div");
@@ -1099,8 +1124,10 @@ body { background: #111827; }
       image.alt = "";
       image.src = url;
       image.addEventListener("load", () => {
-        tile.avatarCircle.replaceChildren(image);
-        tile.avatarImage = image;
+        if (tile.avatarUrl === url && tile.avatarInitials === initials) {
+          tile.avatarCircle.replaceChildren(image);
+          tile.avatarImage = image;
+        }
       }, { once: true });
       image.addEventListener("error", () => image.remove(), { once: true });
     }
@@ -1116,8 +1143,8 @@ body { background: #111827; }
       tile.video.srcObject = null;
     }
     cleanupDocumentWindow() {
-      if (this.screenShareElements) {
-        this.detachScreenShareTrack(this.screenShareElements);
+      if (this.featuredElements) {
+        this.detachTileTrack(this.featuredElements);
       }
       for (const tile of this.tiles.values()) {
         this.detachTileTrack(tile);
@@ -1128,7 +1155,7 @@ body { background: #111827; }
       this.documentGrid = void 0;
       this.documentParticipantCounts = void 0;
       this.documentWindow = void 0;
-      this.screenShareElements = void 0;
+      this.featuredElements = void 0;
       this.automatic = false;
     }
     updateParticipantCountSummary() {
@@ -1202,7 +1229,7 @@ body { background: #111827; }
       if (!this.fallbackVideo) {
         return;
       }
-      const item = this.selected.find(({ participant }) => !participant.local) ?? this.selected[0];
+      const item = this.featuredParticipant ?? this.selected.find(({ participant }) => !participant.local) ?? this.selected[0];
       const nextTrack = this.screenShare?.track ?? item?.track;
       if (this.fallbackAttachedTrack !== nextTrack) {
         this.detachFallbackTrack();
